@@ -40,6 +40,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * 使用TCP来进行leader election, quorumCnxManager负责维护所有连接.
+ *
  * Implementation of leader election using TCP. It uses an object of the class
  * QuorumCnxManager to manage connections. Otherwise, the algorithm is push-based
  * as with the other UDP implementations.
@@ -247,6 +249,7 @@ public class FastLeaderElection implements Election {
                             continue;
                         }
 
+                        // 兼容模式
                         // this is the backwardCompatibility mode in place before ZK-107
                         // It is for a version of the protocol in which we didn't send peer epoch
                         // With peer epoch and version the message became 40 bytes

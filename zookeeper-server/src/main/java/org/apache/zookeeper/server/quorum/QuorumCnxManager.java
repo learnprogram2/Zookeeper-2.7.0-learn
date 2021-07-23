@@ -77,6 +77,13 @@ import org.slf4j.LoggerFactory;
 
 
 /**
+ * 这个应该是集群连接manager, 主要负责leaderElection. 使用TCP.
+ * 和每个server都维护一个连接. 要保证每对server之间有且只有一个连接.
+ *
+ * 如果两个server互相连对方, 本quorumConnectionManager要用一个简单的`tie-breaking`机制决定丢掉一个connection
+ *
+ * quorumCnxManager和每个peer都连号一个连接, 每个连接都维护一个message队列, 如果连接断掉.....balabala
+ *
  * This class implements a connection manager for leader election using TCP. It
  * maintains one connection for every pair of servers. The tricky part is to
  * guarantee that there is exactly one connection for every pair of servers that

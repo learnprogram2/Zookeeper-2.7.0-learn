@@ -40,6 +40,7 @@ import org.apache.zookeeper.txn.TxnHeader;
 
 /**
  * This class has the control logic for the Follower.
+ *
  */
 public class Follower extends Learner {
 

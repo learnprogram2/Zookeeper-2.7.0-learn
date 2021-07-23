@@ -47,6 +47,7 @@ public class WorkerService {
 
     private static final Logger LOG = LoggerFactory.getLogger(WorkerService.class);
 
+    // 这个list是一个线程池的list, 装着1个numWorkerThreads个线程的线程池, 或者是numWorkerThreads个1个线程的线程池. 根据配置.
     private final ArrayList<ExecutorService> workers = new ArrayList<ExecutorService>();
 
     private final String threadNamePrefix;

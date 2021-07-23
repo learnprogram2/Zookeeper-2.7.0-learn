@@ -164,7 +164,7 @@ public class QuorumPeerMain {
             ServerMetrics.metricsProviderInitialized(metricsProvider);
             ProviderRegistry.initialize();
 
-            // 这个看不懂是什么, 但是肯定是Nio网络通讯相关的.
+            // 这个看不懂是什么, 但是肯定是Nio网络通讯相关的: 这应该是接收client连接的
             ServerCnxnFactory cnxnFactory = null;
             ServerCnxnFactory secureCnxnFactory = null;
 
@@ -233,6 +233,7 @@ public class QuorumPeerMain {
                 quorumPeer.setJvmPauseMonitor(new JvmPauseMonitor(config));
             }
 
+            // 启动zk实例, 打个log, 等待zk实例停止(猴年马月)
             quorumPeer.start();
             ZKAuditProvider.addZKStartStopAuditLog();
             quorumPeer.join();

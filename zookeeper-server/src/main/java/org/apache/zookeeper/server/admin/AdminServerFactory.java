@@ -36,6 +36,8 @@ public class AdminServerFactory {
      * to create a JettyAdminServer, rather than referencing the class directly,
      * so that it's ok to omit Jetty from the classpath if a user doesn't wish
      * to pull in Jetty with ZooKeeper.
+     *
+     * 默认, 就会启动一个jetty, 但是这个是干什么的? 我们的socket连接也不走socket啊> 这应该是zk这台服务器的主页, 展示一些文档什么的.
      */
     public static AdminServer createAdminServer() {
         if (!"false".equals(System.getProperty("zookeeper.admin.enableServer"))) {

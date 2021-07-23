@@ -42,9 +42,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * // 应该是接收client请求的: 默认用自己实现的Nio, 默认不用netty
+ *
  * NIOServerCnxnFactory implements a multi-threaded ServerCnxnFactory using
- * NIO non-blocking socket calls. Communication between threads is handled via
- * queues.
+ * NIO non-blocking socket calls.
+ * Communication between threads is handled via queues.
  *
  *   - 1   accept thread, which accepts new connections and assigns to a
  *         selector thread
@@ -60,6 +62,7 @@ import org.slf4j.LoggerFactory;
  *
  * Typical (default) thread counts are: on a 32 core machine, 1 accept thread,
  * 1 connection expiration thread, 4 selector threads, and 64 worker threads.
+ * 哈哈哈, 这里还有一个指导数. 32核的机器, 只有60多个工作线程, 这个是CPU消耗型项目?
  */
 public class NIOServerCnxnFactory extends ServerCnxnFactory {
 
@@ -716,21 +719,25 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         return listenBacklog;
     }
 
+    // web server的启动
     @Override
     public void start() {
         stopped = false;
         if (workerPool == null) {
             workerPool = new WorkerService("NIOWorker", numWorkerThreads, false);
         }
+        // 这个是selector的线程池: 接收响应的
         for (SelectorThread thread : selectorThreads) {
             if (thread.getState() == Thread.State.NEW) {
                 thread.start();
             }
         }
+        // acceptor线程池, 接收连接的.
         // ensure thread is started once and only once
         if (acceptThread.getState() == Thread.State.NEW) {
             acceptThread.start();
         }
+        // 这个线程负责清理过期连接.
         if (expirerThread.getState() == Thread.State.NEW) {
             expirerThread.start();
         }
