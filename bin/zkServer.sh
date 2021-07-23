@@ -21,6 +21,7 @@
 # relative to the canonical path of this script.
 #
 
+# 这里是zk开始的地方
 
 # use POSIX interface, symlink is followed automatically
 ZOOBIN="${BASH_SOURCE-$0}"

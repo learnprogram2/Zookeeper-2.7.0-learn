@@ -271,6 +271,7 @@ public class QuorumPeerConfig {
     }
 
     /**
+     * 所有配置大本营
      * Parse config from a Properties.
      * @param zkProp Properties to parse from.
      * @throws IOException

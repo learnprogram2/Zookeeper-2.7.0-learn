@@ -26,6 +26,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * 主要负责清理snapshots, 清理transaction log.
+ * autopurge.purgeInterval: 清理间隔
+ * autopurge.snapRetainCount: 最多留下的snapshot
+ *
  * This class manages the cleanup of snapshots and corresponding transaction
  * logs by scheduling the auto purge task with the specified
  * 'autopurge.purgeInterval'. It keeps the most recent

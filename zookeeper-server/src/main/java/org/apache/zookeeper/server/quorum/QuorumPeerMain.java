@@ -44,8 +44,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
+ * 这个是ZKServer启动的地方. 主要的配置如下:
  * <h2>Configuration file</h2>
+ *
+ * 主要干的事情:
+ * 1. 启动一个清理定时任务, 负责清理data snapshot和dataLog
+ * 2. 配置, 并启动一个Peer(zk实例)线程.
  *
  * When the main() method of this class is used to start the program, the first
  * argument is used as a path to the config file, which will be used to obtain
@@ -55,20 +59,15 @@ import org.slf4j.LoggerFactory;
  * configuration file. For full details on this see the documentation in
  * docs/index.html
  * <ol>
- * <li>dataDir - The directory where the ZooKeeper data is stored.</li>
- * <li>dataLogDir - The directory where the ZooKeeper transaction log is stored.</li>
- * <li>clientPort - The port used to communicate with clients.</li>
- * <li>tickTime - The duration of a tick in milliseconds. This is the basic
- * unit of time in ZooKeeper.</li>
- * <li>initLimit - The maximum number of ticks that a follower will wait to
- * initially synchronize with a leader.</li>
- * <li>syncLimit - The maximum number of ticks that a follower will wait for a
- * message (including heartbeats) from the leader.</li>
- * <li>server.<i>id</i> - This is the host:port[:port] that the server with the
- * given id will use for the quorum protocol.</li>
+ *   <li>dataDir - The directory where the ZooKeeper data is stored.</li>
+ *   <li>dataLogDir - The directory where the ZooKeeper transaction log is stored.</li>
+ *   <li>clientPort - The port used to communicate with clients.</li>
+ *   <li>tickTime - The duration of a tick in milliseconds. This is the basic unit of time in ZooKeeper.</li>
+ *   <li>initLimit - The maximum number of ticks that a follower will wait to initially synchronize with a leader.</li>
+ *   <li>syncLimit - The maximum number of ticks that a follower will wait for a message (including heartbeats) from the leader.</li>
+ *   <li>server.id - This is the host:port[:port] that the server with the given id will use for the quorum protocol.</li>
  * </ol>
- * In addition to the config file. There is a file in the data directory called
- * "myid" that contains the server id as an ASCII decimal value.
+ * In addition to the config file. There is a file in the data directory called "myid" that contains the server id as an ASCII decimal value.
  *
  */
 @InterfaceAudience.Public
@@ -84,6 +83,8 @@ public class QuorumPeerMain {
      * To start the replicated server specify the configuration file name on
      * the command line.
      * @param args path to the configfile
+     *
+     *             启动!
      */
     public static void main(String[] args) {
         QuorumPeerMain main = new QuorumPeerMain();
@@ -125,6 +126,7 @@ public class QuorumPeerMain {
             config.parse(args[0]);
         }
 
+        // 启动一个定时清理task, 清理: transactionLog, snapshot.
         // Start and schedule the the purge task
         DatadirCleanupManager purgeMgr = new DatadirCleanupManager(
             config.getDataDir(),
@@ -161,6 +163,8 @@ public class QuorumPeerMain {
         try {
             ServerMetrics.metricsProviderInitialized(metricsProvider);
             ProviderRegistry.initialize();
+
+            // 这个看不懂是什么, 但是肯定是Nio网络通讯相关的.
             ServerCnxnFactory cnxnFactory = null;
             ServerCnxnFactory secureCnxnFactory = null;
 
@@ -174,7 +178,9 @@ public class QuorumPeerMain {
                 secureCnxnFactory.configure(config.getSecureClientPortAddress(), config.getMaxClientCnxns(), config.getClientPortListenBacklog(), true);
             }
 
+            // 创建一个QuorumPeer: 配置各种
             quorumPeer = getQuorumPeer();
+            // 1. 维护者txn文件和snapshot文件
             quorumPeer.setTxnFactory(new FileTxnSnapLog(config.getDataLogDir(), config.getDataDir()));
             quorumPeer.enableLocalSessions(config.areLocalSessionsEnabled());
             quorumPeer.enableLocalSessionsUpgrading(config.isLocalSessionsUpgradingEnabled());
@@ -190,6 +196,7 @@ public class QuorumPeerMain {
             quorumPeer.setObserverMasterPort(config.getObserverMasterPort());
             quorumPeer.setConfigFileName(config.getConfigFilename());
             quorumPeer.setClientPortListenBacklog(config.getClientPortListenBacklog());
+            // 内存数据
             quorumPeer.setZKDatabase(new ZKDatabase(quorumPeer.getTxnFactory()));
             quorumPeer.setQuorumVerifier(config.getQuorumVerifier(), false);
             if (config.getLastSeenQuorumVerifier() != null) {

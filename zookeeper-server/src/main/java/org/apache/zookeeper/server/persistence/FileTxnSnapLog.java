@@ -44,6 +44,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ *
+ * 这个类维护着 transactionLog, snapshot文件
  * This is a helper class
  * above the implementations
  * of txnlog and snapshot
