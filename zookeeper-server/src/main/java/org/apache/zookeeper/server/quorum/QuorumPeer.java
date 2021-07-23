@@ -86,6 +86,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * 这就是一个ZK实例, 就是一个线程.
+ *
  * This class manages the quorum protocol. There are three states this server
  * can be in:
  * <ol>
@@ -1042,6 +1044,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         }
     }
 
+    // 这个就是3!
     private int electionType;
 
     Election electionAlg;
@@ -1053,6 +1056,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     private final QuorumStats quorumStats;
 
+    // 这应该是zk这台服务器的主页, 展示一些文档什么的. 连接不走这个.
     AdminServer adminServer;
 
     private final boolean reconfigEnabled;
@@ -1122,21 +1126,27 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         return quorumStats;
     }
 
+    // 清楚明白!
     @Override
     public synchronized void start() {
         if (!getView().containsKey(myid)) {
             throw new RuntimeException("My id " + myid + " not in the peer list");
         }
+        // 加载本地的DB文件到内存
         loadDataBase();
+        // 启动socket连接和worker线程: 接受请求, 处理.
         startServerCnxnFactory();
         try {
+            // 启动一个展示主页的jetty服务器.
             adminServer.start();
         } catch (AdminServerException e) {
             LOG.warn("Problem starting AdminServer", e);
             System.out.println(e);
         }
+        // 3. 启动fastLeaderElection里面的send和receive线程, 开始运行选举算法.
         startLeaderElection();
-        startJvmPauseMonitor();
+        startJvmPauseMonitor(); // 没什么用, 一个打监控log的
+        // 4. 开始启动全新的peer线程, 运行run()方法了
         super.start();
     }
 
@@ -1202,6 +1212,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     public synchronized void startLeaderElection() {
         try {
             if (getPeerState() == ServerState.LOOKING) {
+                // 第一次进来, 包装一张选票?
                 currentVote = new Vote(myid, getLastLoggedZxid(), getCurrentEpoch());
             }
         } catch (IOException e) {
@@ -1210,6 +1221,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             throw re;
         }
 
+        // 选举算法
         this.electionAlg = createElectionAlgorithm(electionType);
     }
 
@@ -1325,7 +1337,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
         //TODO: use a factory rather than a switch
         switch (electionAlgorithm) {
-        case 1:
+        case 1: // 这个1, 2 是JB什么意思?
             throw new UnsupportedOperationException("Election Algorithm 1 is not supported.");
         case 2:
             throw new UnsupportedOperationException("Election Algorithm 2 is not supported.");
@@ -1339,6 +1351,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             QuorumCnxManager.Listener listener = qcm.listener;
             if (listener != null) {
                 listener.start();
+                // 开始收发消息, 里面会有算法实现吧.
                 FastLeaderElection fle = new FastLeaderElection(this, qcm);
                 fle.start();
                 le = fle;
@@ -1391,6 +1404,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         try {
             jmxQuorumBean = new QuorumBean(this);
             MBeanRegistry.getInstance().register(jmxQuorumBean, null);
+            // 这个应该是对配置的集群里面每个zkServer都包装成了一个QuorumServer.
+            // 然后监控xxx什么的.
             for (QuorumServer s : getView().values()) {
                 ZKMBeanInfo p;
                 if (getId() == s.id) {
@@ -1424,7 +1439,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 if (unavailableStartTime == 0) {
                     unavailableStartTime = Time.currentElapsedTime();
                 }
-
+                // 牛逼, 清楚明白, 这里是按照当前的peer的状态开始分类运行.
                 switch (getPeerState()) {
                 case LOOKING:
                     LOG.info("LOOKING");
