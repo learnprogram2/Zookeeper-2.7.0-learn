@@ -68,6 +68,8 @@ public class QuorumMaj implements QuorumVerifier {
     /**
      * Defines a majority to avoid computing it every time.
      *
+     * 定义大多数.
+     *
      */
     public QuorumMaj(Map<Long, QuorumServer> allMembers) {
         this.allMembers = allMembers;
@@ -115,6 +117,7 @@ public class QuorumMaj implements QuorumVerifier {
     public String toString() {
         StringBuilder sw = new StringBuilder();
 
+        // 把自己的配置的peer都拼装起来了: "server.1=localhost:3888|168.23.4.1:3888:participant;version=0"
         for (QuorumServer member : getAllMembers().values()) {
             String key = "server." + member.id;
             String value = member.toString();

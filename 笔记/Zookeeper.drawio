@@ -314,7 +314,7 @@
         </mxGraphModel>
     </diagram>
     <diagram id="DPCjVYEebe5Jq4DRqgq5" name="ZK1. ZK启动过程">
-        <mxGraphModel dx="1374" dy="910" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+        <mxGraphModel dx="3435" dy="2275" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
             <root>
                 <mxCell id="NbPgL9O8-m7nmaHf1V12-0"/>
                 <mxCell id="NbPgL9O8-m7nmaHf1V12-1" parent="NbPgL9O8-m7nmaHf1V12-0"/>
@@ -529,10 +529,13 @@
         </mxGraphModel>
     </diagram>
     <diagram name="ZK2. Looking状态选举过程" id="jVjA85MLJJOv70pykz2O">
-        <mxGraphModel dx="2174" dy="910" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+        <mxGraphModel dx="3695" dy="1071" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
             <root>
                 <mxCell id="UtrOZooaUX3hYhCwdXiv-0"/>
                 <mxCell id="UtrOZooaUX3hYhCwdXiv-1" parent="UtrOZooaUX3hYhCwdXiv-0"/>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-85" value="" style="rounded=0;whiteSpace=wrap;html=1;fontSize=9;fillColor=none;" vertex="1" parent="UtrOZooaUX3hYhCwdXiv-1">
+                    <mxGeometry x="-1986" y="445" width="1084" height="914" as="geometry"/>
+                </mxCell>
                 <mxCell id="UtrOZooaUX3hYhCwdXiv-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;strokeColor=#d79b00;strokeWidth=2;dashed=1;fillColor=#ffe6cc;" parent="UtrOZooaUX3hYhCwdXiv-1" source="UtrOZooaUX3hYhCwdXiv-4" target="UtrOZooaUX3hYhCwdXiv-7" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
@@ -681,7 +684,7 @@
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="UtrOZooaUX3hYhCwdXiv-49" value="quorumCnxMgr" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#d79b00;fillColor=#ffe6cc;" parent="UtrOZooaUX3hYhCwdXiv-1" vertex="1">
-                    <mxGeometry x="-79" y="504" width="80" height="30" as="geometry"/>
+                    <mxGeometry x="-80" y="488" width="80" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="UtrOZooaUX3hYhCwdXiv-50" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;strokeColor=#d79b00;strokeWidth=2;dashed=1;fillColor=#ffe6cc;" parent="UtrOZooaUX3hYhCwdXiv-1" source="UtrOZooaUX3hYhCwdXiv-54" target="UtrOZooaUX3hYhCwdXiv-49" edge="1">
                     <mxGeometry relative="1" as="geometry">
@@ -708,7 +711,10 @@
                     <mxGeometry x="270" y="488.75" width="120" height="60" as="geometry"/>
                 </mxCell>
                 <mxCell id="UtrOZooaUX3hYhCwdXiv-55" value="&lt;b&gt;QuorumCnxManager&lt;br&gt;&lt;/b&gt;peer的连接, 收发队列" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="UtrOZooaUX3hYhCwdXiv-1" vertex="1">
-                    <mxGeometry x="-99" y="561.5" width="120" height="60" as="geometry"/>
+                    <mxGeometry x="-100" y="545.5" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-89" value="3. 启动" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;fontSize=9;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="UtrOZooaUX3hYhCwdXiv-56" target="puGpuqbUjW5oyIaAnzhM-14">
+                    <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="UtrOZooaUX3hYhCwdXiv-56" value="- 启动QCM的listener开始连peer&lt;br&gt;&lt;font color=&quot;#ff0000&quot;&gt;start()&lt;/font&gt;&lt;br&gt;1. 初始化收发组件&lt;br&gt;3. 启动ws, wr." style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;align=left;" parent="UtrOZooaUX3hYhCwdXiv-1" vertex="1">
                     <mxGeometry x="232.5" y="660" width="195" height="63" as="geometry"/>
@@ -716,8 +722,11 @@
                 <mxCell id="UtrOZooaUX3hYhCwdXiv-57" value="zkDb" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="UtrOZooaUX3hYhCwdXiv-1" vertex="1">
                     <mxGeometry x="660" y="205" width="100" height="45" as="geometry"/>
                 </mxCell>
-                <mxCell id="UtrOZooaUX3hYhCwdXiv-58" value="&lt;font color=&quot;#ff0000&quot;&gt;lookForLeader()&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;align=left;" parent="UtrOZooaUX3hYhCwdXiv-1" vertex="1">
-                    <mxGeometry x="232.5" y="801" width="195" height="100" as="geometry"/>
+                <mxCell id="puGpuqbUjW5oyIaAnzhM-17" value="2. 经过sendQueue, &lt;br&gt;ws线程, 实际发送" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#FF0000;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="UtrOZooaUX3hYhCwdXiv-58" target="puGpuqbUjW5oyIaAnzhM-16">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="UtrOZooaUX3hYhCwdXiv-58" value="&lt;font color=&quot;#ff0000&quot;&gt;lookForLeader()&lt;/font&gt;&lt;br&gt;1. 更新自己的&lt;span style=&quot;font-family: &amp;#34;consolas&amp;#34; , monospace ; font-size: 9pt&quot;&gt;logicalclock,&amp;nbsp;&lt;/span&gt;&lt;span&gt;proposal, 投自己.&lt;/span&gt;&lt;br&gt;2. 把自己的选票, 状态, txid, epoch, 和集群配置都发给所有peer(包括自己).&lt;br&gt;3. 阻塞拿recvQueue里面的响应的投票, 收不到就发一遍, 循环&lt;br&gt;4. 拿到一个peer的44字节信息.&lt;br&gt;4.1 如果是looking发过来的-&amp;gt;&lt;br&gt;&lt;b&gt;对方胜于自己(peerEpoch, zxid, sid)自己的选票就跟随对方. 对方弱就扔掉.&lt;br&gt;&lt;/b&gt;自己的&lt;b&gt;选票每更新一次都会sendNotifications&lt;/b&gt;给所有peer.&lt;br&gt;&lt;b&gt;统计当前的选票过半, 修改peer的状态, 清掉recvQue.&lt;/b&gt;&lt;br&gt;4.2 如果是&lt;b&gt;Follower, Leader发来的选票: 还会等待大多数响应校验一下过半机制, 还会校验一下leader(&lt;span style=&quot;color: rgb(8 , 8 , 8) ; font-family: &amp;#34;consolas&amp;#34; , monospace ; font-size: 9pt&quot;&gt;checkLeader&lt;/span&gt;&lt;span&gt;). 修改peer状态, 清掉recvQueue&lt;/span&gt;&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;align=left;" parent="UtrOZooaUX3hYhCwdXiv-1" vertex="1">
+                    <mxGeometry x="181.5" y="805" width="297" height="244" as="geometry"/>
                 </mxCell>
                 <mxCell id="UtrOZooaUX3hYhCwdXiv-59" value="follower" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="UtrOZooaUX3hYhCwdXiv-1" vertex="1">
                     <mxGeometry x="575" y="735" width="100" height="45" as="geometry"/>
@@ -741,7 +750,7 @@
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="UtrOZooaUX3hYhCwdXiv-64" value="listener: 监听3888" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#d79b00;fillColor=#ffe6cc;" parent="UtrOZooaUX3hYhCwdXiv-1" vertex="1">
-                    <mxGeometry x="-408" y="596" width="80" height="30" as="geometry"/>
+                    <mxGeometry x="-439" y="575.5" width="80" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="UtrOZooaUX3hYhCwdXiv-66" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;strokeColor=#d79b00;strokeWidth=2;dashed=1;fillColor=#ffe6cc;" parent="UtrOZooaUX3hYhCwdXiv-1" source="UtrOZooaUX3hYhCwdXiv-55" target="UtrOZooaUX3hYhCwdXiv-64" edge="1">
                     <mxGeometry relative="1" as="geometry">
@@ -750,15 +759,15 @@
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="UtrOZooaUX3hYhCwdXiv-67" value="&lt;b&gt;QCM.Listener&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#82b366;fillColor=none;" parent="UtrOZooaUX3hYhCwdXiv-1" vertex="1">
-                    <mxGeometry x="-428" y="654.5" width="120" height="40.5" as="geometry"/>
+                    <mxGeometry x="-459" y="634" width="120" height="40.5" as="geometry"/>
                 </mxCell>
                 <mxCell id="UtrOZooaUX3hYhCwdXiv-69" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;strokeColor=#000000;strokeWidth=1;" parent="UtrOZooaUX3hYhCwdXiv-1" source="UtrOZooaUX3hYhCwdXiv-64" target="UtrOZooaUX3hYhCwdXiv-67" edge="1">
                     <mxGeometry relative="1" as="geometry">
-                        <mxPoint x="-185" y="589" as="sourcePoint"/>
-                        <mxPoint x="-185" y="616.5" as="targetPoint"/>
+                        <mxPoint x="-216" y="568.5" as="sourcePoint"/>
+                        <mxPoint x="-216" y="596" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="puGpuqbUjW5oyIaAnzhM-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.75;exitDx=0;exitDy=0;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="UtrOZooaUX3hYhCwdXiv-70" target="puGpuqbUjW5oyIaAnzhM-4">
+                <mxCell id="puGpuqbUjW5oyIaAnzhM-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="UtrOZooaUX3hYhCwdXiv-70" target="puGpuqbUjW5oyIaAnzhM-4">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="puGpuqbUjW5oyIaAnzhM-3" value="2. 每个sid&lt;br&gt;都有queue和&lt;br&gt;两个worker线程" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="puGpuqbUjW5oyIaAnzhM-2">
@@ -767,12 +776,12 @@
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="UtrOZooaUX3hYhCwdXiv-70" value="run():&lt;br&gt;大概原理: 为端口3888绑定一个handler处理, 一直监听.&lt;br&gt;&lt;b&gt;&lt;font color=&quot;#ff0000&quot;&gt;handleConnection(sock) :&lt;br&gt;&lt;/font&gt;&lt;/b&gt;1. &lt;b&gt;拒绝sid小的连自己&lt;/b&gt;, 遇到了, 清空sock相关收发worker, 尝试连对方.&lt;br&gt;2. sid小的, &lt;b&gt;创建sendWorker, recvWorker, 启动. 创建一个sendQueue.同步队列!&lt;br&gt;3. observer的sid递减, 负数.&lt;br&gt;&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;align=left;" parent="UtrOZooaUX3hYhCwdXiv-1" vertex="1">
-                    <mxGeometry x="-490" y="724" width="244" height="131" as="geometry"/>
+                    <mxGeometry x="-518" y="690" width="244" height="131" as="geometry"/>
                 </mxCell>
                 <mxCell id="UtrOZooaUX3hYhCwdXiv-71" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;strokeColor=#d79b00;strokeWidth=2;dashed=1;fillColor=#ffe6cc;" parent="UtrOZooaUX3hYhCwdXiv-1" source="UtrOZooaUX3hYhCwdXiv-67" target="UtrOZooaUX3hYhCwdXiv-70" edge="1">
                     <mxGeometry relative="1" as="geometry">
-                        <mxPoint x="-246" y="621.5" as="sourcePoint"/>
-                        <mxPoint x="-318" y="621" as="targetPoint"/>
+                        <mxPoint x="-277" y="601" as="sourcePoint"/>
+                        <mxPoint x="-349" y="600.5" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="puGpuqbUjW5oyIaAnzhM-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;strokeColor=#d79b00;strokeWidth=2;dashed=1;fillColor=#ffe6cc;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="UtrOZooaUX3hYhCwdXiv-55" target="puGpuqbUjW5oyIaAnzhM-4">
@@ -782,7 +791,7 @@
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="puGpuqbUjW5oyIaAnzhM-6" value="" style="group" vertex="1" connectable="0" parent="UtrOZooaUX3hYhCwdXiv-1">
-                    <mxGeometry x="-161" y="654.5" width="82" height="101" as="geometry"/>
+                    <mxGeometry x="-170" y="654.5" width="82" height="101" as="geometry"/>
                 </mxCell>
                 <mxCell id="puGpuqbUjW5oyIaAnzhM-4" value="" style="rounded=0;whiteSpace=wrap;html=1;align=left;strokeColor=#d79b00;dashed=1;fillColor=none;" vertex="1" parent="puGpuqbUjW5oyIaAnzhM-6">
                     <mxGeometry width="82" height="101" as="geometry"/>
@@ -790,7 +799,7 @@
                 <mxCell id="UtrOZooaUX3hYhCwdXiv-72" value="senderWorker&lt;br&gt;&amp;lt;sid, SW&amp;gt;" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#d79b00;fillColor=#ffe6cc;" parent="puGpuqbUjW5oyIaAnzhM-6" vertex="1">
                     <mxGeometry x="1" y="5.5" width="80" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="puGpuqbUjW5oyIaAnzhM-0" value="queueSendMap&lt;br&gt;&amp;lt;sid, bqueue&amp;gt;" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#d79b00;fillColor=#ffe6cc;" vertex="1" parent="puGpuqbUjW5oyIaAnzhM-6">
+                <mxCell id="puGpuqbUjW5oyIaAnzhM-0" value="queueSendMap&lt;br&gt;&amp;lt;sid,&lt;b&gt;bqueue1&lt;/b&gt;&amp;gt;" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#d79b00;fillColor=#ffe6cc;" vertex="1" parent="puGpuqbUjW5oyIaAnzhM-6">
                     <mxGeometry x="1" y="35.5" width="80" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="puGpuqbUjW5oyIaAnzhM-1" value="lastMsgSent&lt;br&gt;&amp;lt;sid, buff&amp;gt;" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#d79b00;fillColor=#ffe6cc;" vertex="1" parent="puGpuqbUjW5oyIaAnzhM-6">
@@ -805,11 +814,11 @@
                 <mxCell id="puGpuqbUjW5oyIaAnzhM-10" value="sendQueue" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#d79b00;fillColor=#ffe6cc;" vertex="1" parent="UtrOZooaUX3hYhCwdXiv-1">
                     <mxGeometry x="342" y="553" width="80" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="puGpuqbUjW5oyIaAnzhM-11" value="recvQueue" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#d79b00;fillColor=#ffe6cc;" vertex="1" parent="UtrOZooaUX3hYhCwdXiv-1">
+                <mxCell id="puGpuqbUjW5oyIaAnzhM-11" value="recvQueue:" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#d79b00;fillColor=#ffe6cc;" vertex="1" parent="UtrOZooaUX3hYhCwdXiv-1">
                     <mxGeometry x="342" y="583" width="80" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="puGpuqbUjW5oyIaAnzhM-12" value="&lt;b&gt;WorkerSender:&lt;/b&gt;&lt;br&gt;单纯把队列拿取交给QCM发给指定sid" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="UtrOZooaUX3hYhCwdXiv-1">
-                    <mxGeometry x="86" y="545" width="107" height="46" as="geometry"/>
+                    <mxGeometry x="112" y="545" width="107" height="46" as="geometry"/>
                 </mxCell>
                 <mxCell id="puGpuqbUjW5oyIaAnzhM-13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="puGpuqbUjW5oyIaAnzhM-12" target="puGpuqbUjW5oyIaAnzhM-7">
                     <mxGeometry relative="1" as="geometry">
@@ -817,14 +826,304 @@
                         <mxPoint x="-29" y="571.5" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="puGpuqbUjW5oyIaAnzhM-14" value="&lt;b&gt;WorkerReceiver:&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#ff0000&quot;&gt;从QCM接收, 解析, 放到recvQueue里&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="UtrOZooaUX3hYhCwdXiv-1">
-                    <mxGeometry x="86" y="596" width="107" height="46" as="geometry"/>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-88" value="一个peer的44字节的信息" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;fontSize=9;strokeColor=#FF0000;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="puGpuqbUjW5oyIaAnzhM-14" target="puGpuqbUjW5oyIaAnzhM-11">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="puGpuqbUjW5oyIaAnzhM-14" value="&lt;b&gt;WorkerReceiver:&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 9px&quot;&gt;&lt;font color=&quot;#ff0000&quot;&gt;接收, 解析:&lt;/font&gt;&lt;br&gt;&lt;div style=&quot;text-align: left&quot;&gt;1. 自己是looking, 放入recvQueue里. 对方也是, 而且electionEpoch比自己小, 响应对方投自己&lt;/div&gt;&lt;div style=&quot;text-align: left&quot;&gt;2. 自己不是looking, 对方是, 把自己的vote给它&lt;/div&gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="UtrOZooaUX3hYhCwdXiv-1">
+                    <mxGeometry x="109" y="593.25" width="107" height="91.75" as="geometry"/>
                 </mxCell>
                 <mxCell id="puGpuqbUjW5oyIaAnzhM-15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="puGpuqbUjW5oyIaAnzhM-14" target="puGpuqbUjW5oyIaAnzhM-9">
                     <mxGeometry relative="1" as="geometry">
                         <mxPoint x="203" y="578" as="sourcePoint"/>
                         <mxPoint x="245" y="578" as="targetPoint"/>
                     </mxGeometry>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-11" value="- 序列化" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=9;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="puGpuqbUjW5oyIaAnzhM-16" target="GW1vWSZwJK0EqwMKYa0h-9">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-16" value="3. 连接peer: 假设这是两个peer" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.75;entryDx=0;entryDy=0;fontSize=9;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="puGpuqbUjW5oyIaAnzhM-16" target="UtrOZooaUX3hYhCwdXiv-70">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-17" value="2. 放sid的&lt;br&gt;sendQue" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;fontSize=9;strokeColor=#FF0000;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="puGpuqbUjW5oyIaAnzhM-16" target="puGpuqbUjW5oyIaAnzhM-0">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="puGpuqbUjW5oyIaAnzhM-16" value="toSend(sid, buff)&lt;br&gt;- buff是把信息序列化了: state, leader, zxid, logicClock, peerEpoch, configData.&lt;br&gt;1. 如果sid是自己, 直接塞入cecvQueue&lt;br&gt;2. 把buffer放到sid自己的BQueue里面(&lt;b&gt;阻塞&lt;/b&gt;)&lt;br&gt;3.&amp;nbsp;&lt;b&gt;第一次就连peer. 放入线程池异步, 创建Bio的socket连&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;align=left;" vertex="1" parent="UtrOZooaUX3hYhCwdXiv-1">
+                    <mxGeometry x="-161" y="798" width="244" height="113" as="geometry"/>
+                </mxCell>
+                <mxCell id="puGpuqbUjW5oyIaAnzhM-18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;strokeColor=#d79b00;strokeWidth=2;dashed=1;fillColor=#ffe6cc;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="UtrOZooaUX3hYhCwdXiv-55" target="puGpuqbUjW5oyIaAnzhM-16">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="-29" y="631.5" as="sourcePoint"/>
+                        <mxPoint x="-109.97142857142853" y="664.5" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-10" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=9;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="GW1vWSZwJK0EqwMKYa0h-8" target="GW1vWSZwJK0EqwMKYa0h-9">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-9" value="v2版本的notification&lt;br&gt;固定44字节:&lt;br&gt;&lt;b&gt;实际发送:len+buff&lt;/b&gt;" style="whiteSpace=wrap;html=1;rounded=1;fontSize=9;fillColor=none;arcSize=0;" vertex="1" parent="UtrOZooaUX3hYhCwdXiv-1">
+                    <mxGeometry x="-66.5" y="1001" width="53" height="61" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-12" value="" style="group" vertex="1" connectable="0" parent="UtrOZooaUX3hYhCwdXiv-1">
+                    <mxGeometry x="-226.5" y="928" width="115" height="248" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-0" value="当前peer状态:&lt;br style=&quot;font-size: 9px;&quot;&gt;Looking: 4byte" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;align=left;fontSize=9;" vertex="1" parent="GW1vWSZwJK0EqwMKYa0h-12">
+                    <mxGeometry width="63" height="31" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-1" value="proposedLeader&lt;br style=&quot;font-size: 9px;&quot;&gt;自己的sid:8byte" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;align=left;fontSize=9;" vertex="1" parent="GW1vWSZwJK0EqwMKYa0h-12">
+                    <mxGeometry y="31" width="95" height="31" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-2" value="electionEpoch:&lt;br style=&quot;font-size: 9px;&quot;&gt;自己的logicClock:8byte" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;align=left;fontSize=9;" vertex="1" parent="GW1vWSZwJK0EqwMKYa0h-12">
+                    <mxGeometry y="93" width="95" height="31" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-3" value="peerEpoch:&lt;br style=&quot;font-size: 9px;&quot;&gt;数据的epoch:8byte" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;align=left;fontSize=9;" vertex="1" parent="GW1vWSZwJK0EqwMKYa0h-12">
+                    <mxGeometry y="124" width="95" height="31" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-4" value="zxid:&lt;br style=&quot;font-size: 9px;&quot;&gt;本地数据的事务id: 8B" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;align=left;fontSize=9;" vertex="1" parent="GW1vWSZwJK0EqwMKYa0h-12">
+                    <mxGeometry y="62" width="95" height="31" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-5" value="当前ZK数据版本:&lt;br style=&quot;font-size: 9px&quot;&gt;3.5是v1, 3.6是v2: 4B" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;align=left;fontSize=9;" vertex="1" parent="GW1vWSZwJK0EqwMKYa0h-12">
+                    <mxGeometry y="155" width="95" height="31" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-6" value="configData.lenth: 4byte" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;align=left;fontSize=9;" vertex="1" parent="GW1vWSZwJK0EqwMKYa0h-12">
+                    <mxGeometry y="186" width="73" height="31" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-7" value="configData 配置" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;align=left;fontSize=9;" vertex="1" parent="GW1vWSZwJK0EqwMKYa0h-12">
+                    <mxGeometry y="217" width="96" height="31" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-8" value="" style="shape=curlyBracket;whiteSpace=wrap;html=1;rounded=1;flipH=1;dashed=1;fontSize=9;fillColor=none;" vertex="1" parent="GW1vWSZwJK0EqwMKYa0h-12">
+                    <mxGeometry x="95" y="2" width="20" height="202" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-87" value="阻塞收" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=9;strokeColor=#FF0000;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="GW1vWSZwJK0EqwMKYa0h-14" target="puGpuqbUjW5oyIaAnzhM-14">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-14" value="recvQueue:100&lt;br&gt;peer共享" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#d79b00;fillColor=#ffe6cc;" vertex="1" parent="UtrOZooaUX3hYhCwdXiv-1">
+                    <mxGeometry x="-23" y="644" width="80" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-15" value="1. 假装收到" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=9;exitX=0.75;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="puGpuqbUjW5oyIaAnzhM-16" target="GW1vWSZwJK0EqwMKYa0h-14">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="-29" y="921" as="sourcePoint"/>
+                        <mxPoint x="-30" y="1086" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-22" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=9;strokeColor=#FF0000;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="GW1vWSZwJK0EqwMKYa0h-20" target="GW1vWSZwJK0EqwMKYa0h-21">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-20" value="&lt;b&gt;SendWorker:&amp;nbsp;&lt;/b&gt;&lt;br&gt;阻塞拿, 直接发" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#82b366;fillColor=none;" vertex="1" parent="UtrOZooaUX3hYhCwdXiv-1">
+                    <mxGeometry x="-271" y="654.5" width="93" height="30.5" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-24" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=9;strokeColor=#FF0000;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="GW1vWSZwJK0EqwMKYa0h-21" target="GW1vWSZwJK0EqwMKYa0h-14">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-21" value="&lt;b&gt;RecvWorker:&lt;/b&gt;&lt;br&gt;loop收, 放que里" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#82b366;fillColor=none;" vertex="1" parent="UtrOZooaUX3hYhCwdXiv-1">
+                    <mxGeometry x="-270" y="603.5" width="92" height="30.5" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-23" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;fontSize=9;strokeColor=#FF0000;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="puGpuqbUjW5oyIaAnzhM-0" target="GW1vWSZwJK0EqwMKYa0h-20">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-29" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="GW1vWSZwJK0EqwMKYa0h-30" target="GW1vWSZwJK0EqwMKYa0h-33">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-30" value="quorumCnxMgr" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#d79b00;fillColor=#ffe6cc;" vertex="1" parent="UtrOZooaUX3hYhCwdXiv-1">
+                    <mxGeometry x="-1501" y="644" width="80" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-31" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;strokeColor=#d79b00;strokeWidth=2;dashed=1;fillColor=#ffe6cc;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="GW1vWSZwJK0EqwMKYa0h-32" target="GW1vWSZwJK0EqwMKYa0h-30">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="-1201" y="257.25" as="sourcePoint"/>
+                        <mxPoint x="-1111" y="257.25" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-32" value="FastLeaderElection&lt;br&gt;leader选举" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="UtrOZooaUX3hYhCwdXiv-1">
+                    <mxGeometry x="-1151" y="644.75" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-33" value="&lt;b&gt;QuorumCnxManager&lt;br&gt;&lt;/b&gt;peer的连接, 收发队列" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="UtrOZooaUX3hYhCwdXiv-1">
+                    <mxGeometry x="-1521" y="701.5" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-34" value="- 启动QCM的listener开始连peer&lt;br&gt;&lt;font color=&quot;#ff0000&quot;&gt;start()&lt;/font&gt;&lt;br&gt;1. 初始化收发组件&lt;br&gt;3. 启动ws, wr." style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;align=left;" vertex="1" parent="UtrOZooaUX3hYhCwdXiv-1">
+                    <mxGeometry x="-1188.5" y="816" width="195" height="63" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-35" value="2. 经过sendQueue, &lt;br&gt;ws线程, 实际发送" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#FF0000;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="GW1vWSZwJK0EqwMKYa0h-36" target="GW1vWSZwJK0EqwMKYa0h-64">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-36" value="&lt;font color=&quot;#ff0000&quot;&gt;lookForLeader()&lt;br&gt;1. 更新自己的proposal, 投自己.&lt;br&gt;2. 把自己的选票, 状态, txid, epoch, 和集群配置都发给所有peer(包括自己).&lt;br&gt;&lt;br&gt;&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;align=left;" vertex="1" parent="UtrOZooaUX3hYhCwdXiv-1">
+                    <mxGeometry x="-1188.5" y="957" width="195" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-37" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;strokeColor=#d79b00;strokeWidth=2;dashed=1;fillColor=#ffe6cc;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="GW1vWSZwJK0EqwMKYa0h-34" target="GW1vWSZwJK0EqwMKYa0h-32">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="-1130.999702733956" y="580.8275862068965" as="sourcePoint"/>
+                        <mxPoint x="-1201.0000594530761" y="612.2758620689656" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-38" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;strokeColor=#d79b00;strokeWidth=2;dashed=1;fillColor=#ffe6cc;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="GW1vWSZwJK0EqwMKYa0h-34" target="GW1vWSZwJK0EqwMKYa0h-36">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="-1081" y="738.5" as="sourcePoint"/>
+                        <mxPoint x="-1081" y="714.75" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-39" value="listener: 监听3888" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#d79b00;fillColor=#ffe6cc;" vertex="1" parent="UtrOZooaUX3hYhCwdXiv-1">
+                    <mxGeometry x="-1860" y="731.5" width="80" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-40" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;strokeColor=#d79b00;strokeWidth=2;dashed=1;fillColor=#ffe6cc;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="GW1vWSZwJK0EqwMKYa0h-33" target="GW1vWSZwJK0EqwMKYa0h-39">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="-1274" y="635.8" as="sourcePoint"/>
+                        <mxPoint x="-1450" y="670" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-41" value="&lt;b&gt;QCM.Listener&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#82b366;fillColor=none;" vertex="1" parent="UtrOZooaUX3hYhCwdXiv-1">
+                    <mxGeometry x="-1880" y="790" width="120" height="40.5" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-42" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="GW1vWSZwJK0EqwMKYa0h-39" target="GW1vWSZwJK0EqwMKYa0h-41">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="-1637" y="724.5" as="sourcePoint"/>
+                        <mxPoint x="-1637" y="752" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-43" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="GW1vWSZwJK0EqwMKYa0h-45" target="GW1vWSZwJK0EqwMKYa0h-49">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-44" value="2. 每个sid&lt;br&gt;都有queue和&lt;br&gt;两个worker线程" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="GW1vWSZwJK0EqwMKYa0h-43">
+                    <mxGeometry x="-0.1681" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-45" value="run():&lt;br&gt;大概原理: 为端口3888绑定一个handler处理, 一直监听.&lt;br&gt;&lt;b&gt;&lt;font color=&quot;#ff0000&quot;&gt;handleConnection(sock) :&lt;br&gt;&lt;/font&gt;&lt;/b&gt;1. &lt;b&gt;拒绝sid小的连自己&lt;/b&gt;, 遇到了, 清空sock相关收发worker, 尝试连对方.&lt;br&gt;2. sid小的, &lt;b&gt;创建sendWorker, recvWorker, 启动. 创建一个sendQueue.同步队列!&lt;br&gt;3. observer的sid递减, 负数.&lt;br&gt;&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;align=left;" vertex="1" parent="UtrOZooaUX3hYhCwdXiv-1">
+                    <mxGeometry x="-1939" y="846" width="244" height="131" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-46" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;strokeColor=#d79b00;strokeWidth=2;dashed=1;fillColor=#ffe6cc;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="GW1vWSZwJK0EqwMKYa0h-41" target="GW1vWSZwJK0EqwMKYa0h-45">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="-1698" y="757" as="sourcePoint"/>
+                        <mxPoint x="-1770" y="756.5" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-47" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;strokeColor=#d79b00;strokeWidth=2;dashed=1;fillColor=#ffe6cc;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="GW1vWSZwJK0EqwMKYa0h-33" target="GW1vWSZwJK0EqwMKYa0h-49">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="-1510" y="757.5" as="sourcePoint"/>
+                        <mxPoint x="-1739" y="777" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-48" value="" style="group" vertex="1" connectable="0" parent="UtrOZooaUX3hYhCwdXiv-1">
+                    <mxGeometry x="-1591" y="810.5" width="82" height="101" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-49" value="" style="rounded=0;whiteSpace=wrap;html=1;align=left;strokeColor=#d79b00;dashed=1;fillColor=none;" vertex="1" parent="GW1vWSZwJK0EqwMKYa0h-48">
+                    <mxGeometry width="82" height="101" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-50" value="senderWorker&lt;br&gt;&amp;lt;sid, SW&amp;gt;" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#d79b00;fillColor=#ffe6cc;" vertex="1" parent="GW1vWSZwJK0EqwMKYa0h-48">
+                    <mxGeometry x="1" y="5.5" width="80" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-51" value="queueSendMap&lt;br&gt;&amp;lt;sid, bqueue&amp;gt;" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#d79b00;fillColor=#ffe6cc;" vertex="1" parent="GW1vWSZwJK0EqwMKYa0h-48">
+                    <mxGeometry x="1" y="35.5" width="80" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-52" value="lastMsgSent&lt;br&gt;&amp;lt;sid, buff&amp;gt;" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#d79b00;fillColor=#ffe6cc;" vertex="1" parent="GW1vWSZwJK0EqwMKYa0h-48">
+                    <mxGeometry x="1" y="65.5" width="80" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-53" value="workerSender" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#d79b00;fillColor=#ffe6cc;" vertex="1" parent="UtrOZooaUX3hYhCwdXiv-1">
+                    <mxGeometry x="-1186" y="709" width="80" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-54" value="workerReceiver" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#d79b00;fillColor=#ffe6cc;" vertex="1" parent="UtrOZooaUX3hYhCwdXiv-1">
+                    <mxGeometry x="-1186" y="739" width="80" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-55" value="sendQueue" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#d79b00;fillColor=#ffe6cc;" vertex="1" parent="UtrOZooaUX3hYhCwdXiv-1">
+                    <mxGeometry x="-1079" y="709" width="80" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-56" value="recvQueue" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#d79b00;fillColor=#ffe6cc;" vertex="1" parent="UtrOZooaUX3hYhCwdXiv-1">
+                    <mxGeometry x="-1079" y="739" width="80" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-57" value="&lt;b&gt;WorkerSender:&lt;/b&gt;&lt;br&gt;单纯把队列拿取交给QCM发给指定sid" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="UtrOZooaUX3hYhCwdXiv-1">
+                    <mxGeometry x="-1335" y="701" width="107" height="46" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-58" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="GW1vWSZwJK0EqwMKYa0h-57" target="GW1vWSZwJK0EqwMKYa0h-53">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="-1450" y="700" as="sourcePoint"/>
+                        <mxPoint x="-1450" y="727.5" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-59" value="&lt;b&gt;WorkerReceiver:&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#ff0000&quot;&gt;从QCM接收, 解析, 放到recvQueue里&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="UtrOZooaUX3hYhCwdXiv-1">
+                    <mxGeometry x="-1335" y="752" width="107" height="46" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-60" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;strokeColor=#000000;strokeWidth=1;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="GW1vWSZwJK0EqwMKYa0h-59" target="GW1vWSZwJK0EqwMKYa0h-54">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="-1218" y="734" as="sourcePoint"/>
+                        <mxPoint x="-1176" y="734" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-61" value="- 序列化" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=9;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="GW1vWSZwJK0EqwMKYa0h-64" target="GW1vWSZwJK0EqwMKYa0h-67">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-62" value="3. 连接peer: 假设这是两个peer" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.75;entryDx=0;entryDy=0;fontSize=9;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="GW1vWSZwJK0EqwMKYa0h-64" target="GW1vWSZwJK0EqwMKYa0h-45">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-63" value="2. 放sid的&lt;br&gt;sendQue" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;fontSize=9;strokeColor=#FF0000;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="GW1vWSZwJK0EqwMKYa0h-64" target="GW1vWSZwJK0EqwMKYa0h-51">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-64" value="toSend(sid, buff)&lt;br&gt;- buff是把信息序列化了: state, leader, zxid, logicClock, peerEpoch, configData.&lt;br&gt;1. 如果sid是自己, 直接塞入cecvQueue&lt;br&gt;2. 把buffer放到sid自己的BQueue里面(&lt;b&gt;阻塞&lt;/b&gt;)&lt;br&gt;3.&amp;nbsp;&lt;b&gt;第一次就连peer. 放入线程池异步, 创建Bio的socket连&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;align=left;" vertex="1" parent="UtrOZooaUX3hYhCwdXiv-1">
+                    <mxGeometry x="-1582" y="954" width="244" height="113" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-65" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;strokeColor=#d79b00;strokeWidth=2;dashed=1;fillColor=#ffe6cc;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="GW1vWSZwJK0EqwMKYa0h-33" target="GW1vWSZwJK0EqwMKYa0h-64">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="-1450" y="787.5" as="sourcePoint"/>
+                        <mxPoint x="-1530.9714285714285" y="820.5" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-66" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=9;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="GW1vWSZwJK0EqwMKYa0h-77" target="GW1vWSZwJK0EqwMKYa0h-67">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-67" value="v2版本的notification&lt;br&gt;固定44字节:&lt;br&gt;&lt;b&gt;实际发送:len+buff&lt;/b&gt;" style="whiteSpace=wrap;html=1;rounded=1;fontSize=9;fillColor=none;arcSize=0;" vertex="1" parent="UtrOZooaUX3hYhCwdXiv-1">
+                    <mxGeometry x="-1487.5" y="1157" width="53" height="61" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-68" value="" style="group" vertex="1" connectable="0" parent="UtrOZooaUX3hYhCwdXiv-1">
+                    <mxGeometry x="-1647.5" y="1084" width="115" height="248" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-69" value="当前peer状态:&lt;br style=&quot;font-size: 9px;&quot;&gt;Looking: 4byte" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;align=left;fontSize=9;" vertex="1" parent="GW1vWSZwJK0EqwMKYa0h-68">
+                    <mxGeometry width="63" height="31" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-70" value="proposedLeader&lt;br style=&quot;font-size: 9px;&quot;&gt;自己的sid:8byte" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;align=left;fontSize=9;" vertex="1" parent="GW1vWSZwJK0EqwMKYa0h-68">
+                    <mxGeometry y="31" width="95" height="31" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-71" value="electionEpoch:&lt;br style=&quot;font-size: 9px;&quot;&gt;自己的logicClock:8byte" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;align=left;fontSize=9;" vertex="1" parent="GW1vWSZwJK0EqwMKYa0h-68">
+                    <mxGeometry y="93" width="95" height="31" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-72" value="peerEpoch:&lt;br style=&quot;font-size: 9px;&quot;&gt;数据的epoch:8byte" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;align=left;fontSize=9;" vertex="1" parent="GW1vWSZwJK0EqwMKYa0h-68">
+                    <mxGeometry y="124" width="95" height="31" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-73" value="zxid:&lt;br style=&quot;font-size: 9px;&quot;&gt;本地数据的事务id: 8B" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;align=left;fontSize=9;" vertex="1" parent="GW1vWSZwJK0EqwMKYa0h-68">
+                    <mxGeometry y="62" width="95" height="31" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-74" value="当前ZK数据版本:&lt;br style=&quot;font-size: 9px&quot;&gt;3.5是v1, 3.6是v2: 4B" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;align=left;fontSize=9;" vertex="1" parent="GW1vWSZwJK0EqwMKYa0h-68">
+                    <mxGeometry y="155" width="95" height="31" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-75" value="configData.lenth: 4byte" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;align=left;fontSize=9;" vertex="1" parent="GW1vWSZwJK0EqwMKYa0h-68">
+                    <mxGeometry y="186" width="73" height="31" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-76" value="configData 配置" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;align=left;fontSize=9;" vertex="1" parent="GW1vWSZwJK0EqwMKYa0h-68">
+                    <mxGeometry y="217" width="96" height="31" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-77" value="" style="shape=curlyBracket;whiteSpace=wrap;html=1;rounded=1;flipH=1;dashed=1;fontSize=9;fillColor=none;" vertex="1" parent="GW1vWSZwJK0EqwMKYa0h-68">
+                    <mxGeometry x="95" y="2" width="20" height="202" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-78" value="recvQueue:&lt;br&gt;peer共享" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#d79b00;fillColor=#ffe6cc;" vertex="1" parent="UtrOZooaUX3hYhCwdXiv-1">
+                    <mxGeometry x="-1444" y="800" width="80" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-79" value="1. 假装收到" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=9;exitX=0.75;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="GW1vWSZwJK0EqwMKYa0h-64" target="GW1vWSZwJK0EqwMKYa0h-78">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="-1450" y="1077" as="sourcePoint"/>
+                        <mxPoint x="-1451" y="1242" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-80" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=9;strokeColor=#FF0000;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="GW1vWSZwJK0EqwMKYa0h-81" target="GW1vWSZwJK0EqwMKYa0h-83">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-81" value="&lt;b&gt;SendWorker:&amp;nbsp;&lt;/b&gt;&lt;br&gt;阻塞拿, 直接发" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#82b366;fillColor=none;" vertex="1" parent="UtrOZooaUX3hYhCwdXiv-1">
+                    <mxGeometry x="-1692" y="810.5" width="93" height="30.5" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-82" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=9;strokeColor=#FF0000;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="GW1vWSZwJK0EqwMKYa0h-83" target="GW1vWSZwJK0EqwMKYa0h-78">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-83" value="&lt;b&gt;RecvWorker:&lt;/b&gt;&lt;br&gt;loop收, 放que里" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#82b366;fillColor=none;" vertex="1" parent="UtrOZooaUX3hYhCwdXiv-1">
+                    <mxGeometry x="-1691" y="759.5" width="92" height="30.5" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-84" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;fontSize=9;strokeColor=#FF0000;" edge="1" parent="UtrOZooaUX3hYhCwdXiv-1" source="GW1vWSZwJK0EqwMKYa0h-51" target="GW1vWSZwJK0EqwMKYa0h-81">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="GW1vWSZwJK0EqwMKYa0h-86" value="&lt;font style=&quot;font-size: 12px&quot;&gt;另一个Peer&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fontSize=9;fillColor=none;" vertex="1" parent="UtrOZooaUX3hYhCwdXiv-1">
+                    <mxGeometry x="-1557.5" y="448.5" width="195" height="48" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>

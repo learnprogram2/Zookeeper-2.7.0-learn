@@ -710,6 +710,8 @@ public class QuorumCnxManager {
     }
 
     /**
+     * 这个是发给指定peer的一个数据, 数据就是bytes. 很简单的本机群信息什么的数据.
+     *
      * Processes invoke this message to queue a message to send. Currently,
      * only leader election uses it.
      */
@@ -726,6 +728,7 @@ public class QuorumCnxManager {
         } else {
             /*
              * Start a new connection if doesn't have one already.
+             * 如果和peer没有连接, 就新建一个链接
              */
             BlockingQueue<ByteBuffer> bq = queueSendMap.computeIfAbsent(sid, serverId -> new CircularBlockingQueue<>(SEND_CAPACITY));
             addToSendQueue(bq, b);
@@ -1300,6 +1303,7 @@ public class QuorumCnxManager {
 
                     ByteBuffer b = null;
                     try {
+                        // 1. 这里, 从自己这个sid的队列里阻塞拿
                         BlockingQueue<ByteBuffer> bq = queueSendMap.get(sid);
                         if (bq != null) {
                             b = pollSendQueue(bq, 1000, TimeUnit.MILLISECONDS);
@@ -1307,7 +1311,7 @@ public class QuorumCnxManager {
                             LOG.error("No queue of incoming messages for server {}", sid);
                             break;
                         }
-
+                        // 2. 拿到了就缓存一下, 发出去.
                         if (b != null) {
                             lastMessageSent.put(sid, b);
                             send(b);
@@ -1415,6 +1419,7 @@ public class QuorumCnxManager {
                      * Reads the first int to determine the length of the
                      * message
                      */
+                    // 这就是一直取数据. 取出来的就是那个44+xx的长度, 他最大允许512k的数据, 也就是我们的配置, 大概不能超过511k. 超过了就完了.
                     int length = din.readInt();
                     if (length <= 0 || length > PACKETMAXSIZE) {
                         throw new IOException("Received packet with invalid packet: " + length);
@@ -1499,6 +1504,8 @@ public class QuorumCnxManager {
      * Retrieves and removes a message at the head of this queue,
      * waiting up to the specified wait time if necessary for an element to
      * become available.
+     *
+     * 收到所有的数据都会跑到recvQueue里面. 这里是数据处理的来源.
      *
      * {@link BlockingQueue#poll(long, java.util.concurrent.TimeUnit)}
      */
