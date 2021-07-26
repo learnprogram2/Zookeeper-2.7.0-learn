@@ -566,6 +566,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      * To enable observers to have no identifier, we need a generic identifier
      * at least for QuorumCnxManager. We use the following constant to as the
      * value of such a generic identifier.
+     *
+     * observer是没有sid的, 统一标记成一个int
      */
 
     static final long OBSERVER_ID = Long.MAX_VALUE;
@@ -1337,7 +1339,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
         //TODO: use a factory rather than a switch
         switch (electionAlgorithm) {
-        case 1: // 这个1, 2 是JB什么意思?
+        case 1: // 这个1, 2 是JB什么意思? 这两个是废弃的算法, 之前的版本支持,.
             throw new UnsupportedOperationException("Election Algorithm 1 is not supported.");
         case 2:
             throw new UnsupportedOperationException("Election Algorithm 2 is not supported.");

@@ -113,6 +113,7 @@ public class QuorumCnxManager {
     static final int RECV_CAPACITY = 100;
     // Initialized to 1 to prevent sending
     // stale notifications to peers
+    // peer之间的sendQueue都是及时发送出去的, 预防给peer发送陈旧的通知.
     static final int SEND_CAPACITY = 1;
 
     static final int PACKETMAXSIZE = 1024 * 512;
@@ -243,12 +244,16 @@ public class QuorumCnxManager {
         public static InitialMessage parse(Long protocolVersion, DataInputStream din) throws InitialMessageException, IOException {
             Long sid;
 
+            // 这个意思是说, 在zk3.5 第一个long就是V1版本的, 3.6, 第一个long说就是V2版本的. 再往前应该是第一个long是正数, 表示对方的sid
             if (protocolVersion != PROTOCOL_VERSION_V1 && protocolVersion != PROTOCOL_VERSION_V2) {
                 throw new InitialMessageException("Got unrecognized protocol version %s", protocolVersion);
             }
 
+            // 版本号了之后, 就是sid
+            // [(protocolVersion:long), (sid:long)]
             sid = din.readLong();
 
+            // 再读一个int是buffer的长度.
             int remaining = din.readInt();
             if (remaining <= 0 || remaining > maxBuffer) {
                 throw new InitialMessageException("Unreasonable buffer length: %s", remaining);
@@ -261,6 +266,7 @@ public class QuorumCnxManager {
                 throw new InitialMessageException("Read only %s bytes out of %s sent by server %s", num_read, remaining, sid);
             }
 
+            // 也就是再3.5版本后, 不再只要peer的sid了, 还要对方的host和port, 3.5版本只要一个, 3.6版本要很多个.
             // in PROTOCOL_VERSION_V1 we expect to get a single address here represented as a 'host:port' string
             // in PROTOCOL_VERSION_V2 we expect to get multiple addresses like: 'host1:port1|host2:port2|...'
             String[] addressStrings = new String(b, UTF_8).split("\\|");
@@ -291,6 +297,7 @@ public class QuorumCnxManager {
                 }
             }
 
+            // 这个就是解析出来peer的sid和address(3.6版本后可以很多个)
             return new InitialMessage(sid, addresses);
         }
 
@@ -341,6 +348,7 @@ public class QuorumCnxManager {
 
         initializeConnectionExecutor(mySid, quorumCnxnThreadsSize);
 
+        // 监听peer之间的连接请求
         // Starts listener thread that waits for connection requests
         listener = new Listener();
         listener.setName("QuorumPeerListener");
@@ -556,6 +564,7 @@ public class QuorumCnxManager {
     public void receiveConnection(final Socket sock) {
         DataInputStream din = null;
         try {
+            // 基于socket创建了一个inputStream.
             din = new DataInputStream(new BufferedInputStream(sock.getInputStream()));
 
             LOG.debug("Sync handling of connection request received from: {}", sock.getRemoteSocketAddress());
@@ -605,7 +614,9 @@ public class QuorumCnxManager {
         Long sid = null, protocolVersion = null;
         MultipleAddresses electionAddr = null;
 
+        // 1. 先读取peer的sid, 如果3.5版本的还要读取peer的url:port地址.
         try {
+            // 这是直接读取了一个long.
             protocolVersion = din.readLong();
             if (protocolVersion >= 0) { // this is a server id and not a protocol version
                 sid = protocolVersion;
@@ -624,11 +635,12 @@ public class QuorumCnxManager {
                     return;
                 }
             }
-
+            // 如果peer是observer, 那也给他一个递增的sid
             if (sid == QuorumPeer.OBSERVER_ID) {
                 /*
                  * Choose identifier at random. We need a value to identify
                  * the connection.
+                 * observer的sid都是负数.
                  */
                 sid = observerCounter.getAndDecrement();
                 LOG.info("Setting arbitrary identifier to observer: {}", sid);
@@ -639,11 +651,14 @@ public class QuorumCnxManager {
             return;
         }
 
-        // do authenticating learner
+        // do authenticating learner: 假设说没有认证.
         authServer.authenticate(sock, din);
-        //If wins the challenge, then close the new connection.
+
+        // 1. 如果自己的sid > 对方的sid. 就断开连接, 重新连. 这里是: observer的sid都是负数, 所以不可能让observer连自己, 只能是peer连observer.
+        // If wins the challenge, then close the new connection.
         if (sid < self.getId()) {
             /*
+            把当前 的 senderWorker干掉, 拒绝连接.
              * This replica might still believe that the connection to sid is
              * up, so we have to shut down the workers before trying to open a
              * new connection.
@@ -669,7 +684,10 @@ public class QuorumCnxManager {
             // we saw this case in ZOOKEEPER-2164
             LOG.warn("We got a connection request from a server with our own ID. "
                      + "This should be either a configuration error, or a bug.");
-        } else { // Otherwise start worker threads to receive data.
+        } else {
+
+            // 2. 一个sid比自己大的连了过来! 基于socket创建配套组件: senderWorker, receiveWorker两个.
+            // Otherwise start worker threads to receive data.
             SendWorker sw = new SendWorker(sock, sid);
             RecvWorker rw = new RecvWorker(sock, din, sid, sw);
             sw.setRecv(rw);
@@ -680,8 +698,10 @@ public class QuorumCnxManager {
                 vsw.finish();
             }
 
+            // 3. 把和sid的socket组件(recvWorker, sendWorker)存成map
             senderWorkerMap.put(sid, sw);
 
+            // 4. 给sid这个socket添加一个send队列, 队列是及时队列(只能放1个).
             queueSendMap.putIfAbsent(sid, new CircularBlockingQueue<>(SEND_CAPACITY));
 
             sw.start();
@@ -953,6 +973,7 @@ public class QuorumCnxManager {
                 LOG.debug("Listener thread started, myId: {}", self.getId());
                 Set<InetSocketAddress> addresses;
 
+                // 这个应该是什么安全配置吧, 但是electionAddress就是3888!!!!!!!!!!!!!!!!!!!!
                 if (self.getQuorumListenOnAllIPs()) {
                     addresses = self.getElectionAddress().getWildcardAddresses();
                 } else {
@@ -960,6 +981,7 @@ public class QuorumCnxManager {
                 }
 
                 CountDownLatch latch = new CountDownLatch(addresses.size());
+                // 这个, 为每个接口绑定了一个handler, 这里面的latch要等到每个handler都异常/停掉后cutdown, 然后这个run就推出了.
                 listenerHandlers = addresses.stream().map(address ->
                                 new ListenerHandler(address, self.shouldUsePortUnification(), self.isSslQuorum(), latch))
                         .collect(Collectors.toList());
@@ -1062,6 +1084,7 @@ public class QuorumCnxManager {
 
             /**
              * Sleeps on accept().
+             * TODO: 113. 这个方法就是QCM接收连接请求的地方
              */
             private void acceptConnections() {
                 int numRetries = 0;
@@ -1069,10 +1092,12 @@ public class QuorumCnxManager {
 
                 while ((!shutdown) && (portBindMaxRetry == 0 || numRetries < portBindMaxRetry)) {
                     try {
+                        // 1. 先在3888端口绑定一个serverSocket. 这是BIO哦!!!!!!!!!!!!!!!!!!!!
                         serverSocket = createNewServerSocket();
                         LOG.info("{} is accepting connections now, my election bind port: {}", QuorumCnxManager.this.mySid, address.toString());
                         while (!shutdown) {
                             try {
+                                // 2. 在端口等着接收连接请求. 创建出正常的BIO socket, 都是TcpNoDelay的哦!
                                 client = serverSocket.accept();
                                 setSockOpts(client);
                                 LOG.info("Received connection request from {}", client.getRemoteSocketAddress());
@@ -1084,6 +1109,7 @@ public class QuorumCnxManager {
                                 if (quorumSaslAuthEnabled) {
                                     receiveConnectionAsync(client);
                                 } else {
+                                    // 我们假设说不开启sasl.
                                     receiveConnection(client);
                                 }
                                 numRetries = 0;

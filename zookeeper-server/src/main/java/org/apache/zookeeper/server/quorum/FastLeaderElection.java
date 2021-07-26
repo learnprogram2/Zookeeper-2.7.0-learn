@@ -907,6 +907,7 @@ public class FastLeaderElection implements Election {
     }
 
     /**
+     * // TODO: 111. 这里就是peer刚启动时候, 建立好了leaderElection, 和QCM通讯组件之后. 确定一个leader的地方.
      * Starts a new round of leader election. Whenever our QuorumPeer
      * changes its state to LOOKING, this method is invoked, and it
      * sends notifications to all other peers.
