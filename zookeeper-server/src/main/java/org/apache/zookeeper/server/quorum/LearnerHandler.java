@@ -60,6 +60,8 @@ import org.slf4j.LoggerFactory;
  * There will be an instance of this class created by the Leader for each
  * learner. All communication with a learner is handled by this
  * class.
+ *
+ * leader为每一个learner创建一个learnerHandler, 维护着leader和learner的连接, 处理各种请求.
  */
 public class LearnerHandler extends ZooKeeperThread {
 

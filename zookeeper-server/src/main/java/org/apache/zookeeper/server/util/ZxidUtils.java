@@ -27,6 +27,7 @@ public class ZxidUtils {
         return zxid & 0xffffffffL;
     }
     public static long makeZxid(long epoch, long counter) {
+        // [4byte: epoch] | 0
         return (epoch << 32L) | (counter & 0xffffffffL);
     }
     public static String zxidToString(long zxid) {

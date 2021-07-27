@@ -91,6 +91,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * 这个类是本地模式下的zkServer, 负责设置好处理链条, 来处理请求:
+ * 处理链条: PrepRequestProcessor -> SyncRequestProcessor -> FinalRequestProcessor
+ *
  * This class implements a simple standalone ZooKeeperServer. It sets up the
  * following chain of RequestProcessors to process requests:
  * PrepRequestProcessor -&gt; SyncRequestProcessor -&gt; FinalRequestProcessor
@@ -328,24 +331,35 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      *  * Creates a ZooKeeperServer instance. It sets everything up, but doesn't
      * actually start listening for clients until run() is invoked.
      *
+     * 构造器里面就把各个组件setup了, 只是不启动.
+     *
      */
     public ZooKeeperServer(FileTxnSnapLog txnLogFactory, int tickTime, int minSessionTimeout, int maxSessionTimeout, int clientPortListenBacklog, ZKDatabase zkDb, String initialConfig, boolean reconfigEnabled) {
+        // 这个是server的状态
         serverStats = new ServerStats(this);
+        // 把server的组件存起来
         this.txnLogFactory = txnLogFactory;
         this.txnLogFactory.setServerStats(this.serverStats);
         this.zkDb = zkDb;
         this.tickTime = tickTime;
+
+        // 把一个session的配置也存起来.
         setMinSessionTimeout(minSessionTimeout);
         setMaxSessionTimeout(maxSessionTimeout);
+        // 这个是端口的等待连接数
         this.listenBacklog = clientPortListenBacklog;
         this.reconfigEnabled = reconfigEnabled;
 
+        // 这个是创建了一个会通知自己应该修改状态的监听器, 就看这个监听器放在那里监听, 告诉本类该停止了
+        // leader模式: 这个最终射到leader绑定的2888端口的处理线程里面, 如果端口处理失败, 这整个zkServer都退出.
         listener = new ZooKeeperServerListenerImpl(this);
 
-        readResponseCache = new ResponseCache(Integer.getInteger(
-            GET_DATA_RESPONSE_CACHE_SIZE,
-            ResponseCache.DEFAULT_RESPONSE_CACHE_SIZE), "getData");
+        // 这是创建了一个400大小的缓存, 跟response相关的, 但是不知道具体是存什么的
+        readResponseCache = new ResponseCache(
+                Integer.getInteger( GET_DATA_RESPONSE_CACHE_SIZE,
+                    ResponseCache.DEFAULT_RESPONSE_CACHE_SIZE), "getData");
 
+        // 这是创建了一个400大小的, maxGetChildrenResponseCacheSize 相关的缓存.
         getChildrenResponseCache = new ResponseCache(Integer.getInteger(
             GET_CHILDREN_RESPONSE_CACHE_SIZE,
             ResponseCache.DEFAULT_RESPONSE_CACHE_SIZE), "getChildren");
@@ -532,6 +546,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public void takeSnapshot(boolean syncSnap) {
         long start = Time.currentElapsedTime();
         try {
+            // 这个就是做了一个snapshot, 把dataTree, sessions, 还有其他乱七八糟的信息都输出到文件里了.
             txnLogFactory.save(zkDb.getDataTree(), zkDb.getSessionWithTimeOuts(), syncSnap);
         } catch (IOException e) {
             LOG.error("Severe unrecoverable error, exiting", e);

@@ -977,6 +977,7 @@ public class QuorumCnxManager {
                 Set<InetSocketAddress> addresses;
 
                 // 这个应该是什么安全配置吧, 但是electionAddress就是3888!!!!!!!!!!!!!!!!!!!!
+                // !!!!!! 这个端口是election端口: // zk的port: host:leaderPort(2888):leaderElectionPort(3888);clientPort(2181)
                 if (self.getQuorumListenOnAllIPs()) {
                     addresses = self.getElectionAddress().getWildcardAddresses();
                 } else {

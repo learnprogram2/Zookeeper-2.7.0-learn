@@ -20,6 +20,8 @@ package org.apache.zookeeper.server.quorum;
 
 /**
  * Provides live statistics about Jute buffer usage in term of proposal and client request size.
+ *
+ * 提供了jute buffer在: proposal and client request 的buffer用量监测数据.
  */
 public class BufferStats {
 

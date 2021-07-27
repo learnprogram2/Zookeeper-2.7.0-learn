@@ -145,7 +145,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     private JvmPauseMonitor jvmPauseMonitor;
 
     public static final class AddressTuple {
-
+        // zk的port: host:leaderPort(2888):leaderElectionPort(3888);clientPort(2181)
         public final MultipleAddresses quorumAddr;
         public final MultipleAddresses electionAddr;
         public final InetSocketAddress clientAddr;
@@ -206,8 +206,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         LOG.info("multiAddress.reachabilityCheckEnabled set to {}", multiAddressReachabilityCheckEnabled);
     }
 
+    // zk的port: host:leaderPort(2888):leaderElectionPort(3888);clientPort(2181)
     public static class QuorumServer {
 
+        // 这个应该是quorumAddr
         public MultipleAddresses addr = new MultipleAddresses();
 
         public MultipleAddresses electionAddr = new MultipleAddresses();
@@ -530,6 +532,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     /**
      * (Used for monitoring) shows the current phase of
      * Zab protocol that peer is running.
+     * ZAB: Atomic Broadcast protocol. 这是zab写一下的标识peer状态的枚举.
      */
     public enum ZabState {
         ELECTION,
@@ -706,6 +709,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      * The ZooKeeper server's socket backlog length. The number of connections
      * that will be queued to be read before new connections are dropped. A
      * value of one indicates the default backlog will be used.
+     *
+     * 这个应该是2888端口的一个: 在删除新连接之前将排队等待读取的连接数。
      */
     protected int clientPortListenBacklog = -1;
 
@@ -1317,16 +1322,23 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         return zkDb.getDataTreeLastProcessedZxid();
     }
 
+
+    // =============== 这里开始按照自己的角色, 创建对应的组件了.
     public Follower follower;
     public Leader leader;
     public Observer observer;
 
     protected Follower makeFollower(FileTxnSnapLog logFactory) throws IOException {
-        return new Follower(this, new FollowerZooKeeperServer(logFactory, this, this.zkDb));
+        // logFactory 这个老哥维护着本地的 事务日志文件, 还有snapshot文件.
+        return new Follower(this,
+                            // 这个是创建了一个Follower角色的learner模式的集群模式的zkServer
+                            new FollowerZooKeeperServer(logFactory, this, this.zkDb));
     }
 
     protected Leader makeLeader(FileTxnSnapLog logFactory) throws IOException, X509Exception {
-        return new Leader(this, new LeaderZooKeeperServer(logFactory, this, this.zkDb));
+        return new Leader(this,
+                          // 同follower这个是建立了一个leader角色的集群模式的zkServer
+                          new LeaderZooKeeperServer(logFactory, this, this.zkDb));
     }
 
     protected Observer makeObserver(FileTxnSnapLog logFactory) throws IOException {

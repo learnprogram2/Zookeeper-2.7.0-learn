@@ -39,6 +39,8 @@ import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 
 /**
+ *
+ * 这个是zkServer参与到集群中
  * Abstract base class for all ZooKeeperServers that participate in
  * a quorum.
  */

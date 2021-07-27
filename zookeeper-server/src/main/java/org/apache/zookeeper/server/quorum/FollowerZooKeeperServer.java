@@ -40,6 +40,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * FollowerZooKeeperServer -> LearnerZooKeeperServer(learner角色) -> QuorumZooKeeperServer(集群server) -> ZooKeeperServer(单机server, 负责设置request的处理链条)
+ *
+ * 这个followerZKServer是一种特定的ZooKeeperServer.
+ * 主要设置一个reqeust的处理链条:
+ * FollowerRequestProcessor -> CommitProcessor -> FinalRequestProcessor
+ *
+ * 原本的链条是: PrepRequestProcessor -> SyncRequestProcessor -> FinalRequestProcessor
+ * SyncRequestProcessor增加了log leader的proposal的功能.
+ *
+ *
  * Just like the standard ZooKeeperServer. We just replace the request
  * processors: FollowerRequestProcessor -&gt; CommitProcessor -&gt;
  * FinalRequestProcessor
@@ -55,6 +65,7 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
      */ ConcurrentLinkedQueue<Request> pendingSyncs;
 
     /**
+     * 这个logFactory, 起始在zkDB里面有, 事实上, zkDB怎么可能不维护log呢, logTxnSnapLog就是维护log和snapshot的组件..
      * @throws IOException
      */
     FollowerZooKeeperServer(FileTxnSnapLog logFactory, QuorumPeer self, ZKDatabase zkDb) throws IOException {

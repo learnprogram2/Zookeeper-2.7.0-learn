@@ -36,6 +36,15 @@ import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 
 /**
+ *  FollowerZooKeeperServer -> LearnerZooKeeperServer(learner角色) -
+ *                                                                  -> QuorumZooKeeperServer(集群server) -> ZooKeeperServer(单机server, 负责设置request的处理链条)
+ *  LeaderZooKeeperServer(leader角色)                              -
+ *
+ * 同理: leaderZKServer的处理链条是:
+ * PrepRequestProcessor -> ProposalRequestProcessor -> CommitProcessor -> Leader.ToBeAppliedRequestProcessor -> FinalRequestProcessor
+ *
+ * 人家follower的链条是:
+ * FollowerRequestProcessor -> CommitProcessor -> FinalRequestProcessor
  *
  * Just like the standard ZooKeeperServer. We just replace the request
  * processors: PrepRequestProcessor -&gt; ProposalRequestProcessor -&gt;

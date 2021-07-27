@@ -39,6 +39,10 @@ import org.apache.zookeeper.txn.TxnDigest;
 import org.apache.zookeeper.txn.TxnHeader;
 
 /**
+ *
+ * Follower --
+ *            --> Learner(共享逻辑)
+ * observer --
  * This class has the control logic for the Follower.
  *
  */
@@ -66,11 +70,14 @@ public class Follower extends Learner {
     }
 
     /**
+     * 这个是Follower的启动方法
+     *
      * the main method called by the follower to follow the leader
      *
      * @throws InterruptedException
      */
     void followLeader() throws InterruptedException {
+        // 只有现在具体的角色启动了, 才认为是leaderElection结束了. 这是统计选举时间
         self.end_fle = Time.currentElapsedTime();
         long electionTimeTaken = self.end_fle - self.start_fle;
         self.setElectionTimeTaken(electionTimeTaken);
@@ -80,15 +87,21 @@ public class Follower extends Learner {
         self.end_fle = 0;
         fzk.registerJMX(new FollowerBean(this, zk), self.jmxLocalPeerBean);
 
+
         long connectionTime = 0;
         boolean completedSync = false;
 
         try {
+            // zab协议: 刚开始是election, 现在就可以是discovery了, 先找到leader再说.
             self.setZabState(QuorumPeer.ZabState.DISCOVERY);
+            // 1. 拿到当前选票的leader的地址
             QuorumServer leaderServer = findLeader();
             try {
+                // 2. 这就开始连上它. 直接对着地址连接, 连好了设置一下TCPNoDelay之类的参数.
                 connectToLeader(leaderServer.addr, leaderServer.hostname);
                 connectionTime = System.currentTimeMillis();
+
+                // 3. 把自己的zxid-sid给leader, 接收leader的zxid(包含新的epoch), 更新自己的zxid成leader的
                 long newEpochZxid = registerWithLeader(Leader.FOLLOWERINFO);
                 if (self.isReconfigStateChange()) {
                     throw new Exception("learned about role change");

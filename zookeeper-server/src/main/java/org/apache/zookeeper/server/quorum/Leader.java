@@ -282,10 +282,12 @@ public class Leader extends LearnerMaster {
 
     private final List<ServerSocket> serverSockets = new LinkedList<>();
 
+    // 就干了一件事情: 创建绑定2888端口serverSocket, 可能有多个(不清楚怎么做到的, 不重要), 都在serverSockets里面存着.
     public Leader(QuorumPeer self, LeaderZooKeeperServer zk) throws IOException {
         this.self = self;
-        this.proposalStats = new BufferStats();
-
+        this.proposalStats = new BufferStats(); // 监控数据.
+        // 明白了: zk的port: host:leaderPort(2888):leaderElectionPort(3888);clientPort(2181)
+        // 1. 这里拿到的是 2888端口.
         Set<InetSocketAddress> addresses;
         if (self.getQuorumListenOnAllIPs()) {
             addresses = self.getQuorumAddress().getWildcardAddresses();
@@ -293,10 +295,11 @@ public class Leader extends LearnerMaster {
             addresses = self.getQuorumAddress().getAllAddresses();
         }
 
+        //
         addresses.stream()
-          .map(address -> createServerSocket(address, self.shouldUsePortUnification(), self.isSslQuorum()))
-          .filter(Optional::isPresent)
-          .map(Optional::get)
+                // 1. 创建一个2888端口的serverSocket
+                .map(address -> createServerSocket(address, self.shouldUsePortUnification(), self.isSslQuorum()))
+                .filter(Optional::isPresent) .map(Optional::get)// 创建成功了, 就拿出来.放在serverSockets这个set里面
           .forEach(serverSockets::add);
 
         if (serverSockets.isEmpty()) {
@@ -439,6 +442,7 @@ public class Leader extends LearnerMaster {
         private final AtomicBoolean fail = new AtomicBoolean(false);
 
         LearnerCnxAcceptor() {
+            // 射了一下名字(由端口2888拼装一个名字), 然后还添加了leader的listener到这里面, 如果端口的socket处理失败, 看来是要退出整个leader.
             super("LearnerCnxAcceptor-" + serverSockets.stream()
                       .map(ServerSocket::getLocalSocketAddress)
                       .map(Objects::toString)
@@ -453,6 +457,7 @@ public class Leader extends LearnerMaster {
                 CountDownLatch latch = new CountDownLatch(serverSockets.size());
 
                 serverSockets.forEach(serverSocket ->
+                        // 这个绑定2888端口, 最终也是LearnerCnxAcceptorHandler这个处理器在处理.
                         executor.submit(new LearnerCnxAcceptorHandler(serverSocket, latch)));
 
                 try {
@@ -510,6 +515,7 @@ public class Leader extends LearnerMaster {
                 Socket socket = null;
                 boolean error = false;
                 try {
+                    // 接收到了一个连leader的连接
                     socket = serverSocket.accept();
 
                     // start with the initLimit, once the ack is processed
@@ -517,7 +523,11 @@ public class Leader extends LearnerMaster {
                     socket.setSoTimeout(self.tickTime * self.initLimit);
                     socket.setTcpNoDelay(nodelay);
 
+                    // 把socket包装成一个io流
                     BufferedInputStream is = new BufferedInputStream(socket.getInputStream());
+                    // 为这个socket, 创建了一个learnerHandler, 启动了, 看来是开始处理这个learner了.
+                    // 宛若接了一个客人, 交给一个worker
+                    // 这个socket我们没有维护起来, 看来是完全交给 learnerHandler处理了.
                     LearnerHandler fh = new LearnerHandler(socket, is, Leader.this);
                     fh.start();
                 } catch (SocketException e) {
@@ -571,12 +581,14 @@ public class Leader extends LearnerMaster {
     }
 
     /**
+     * 这是leader成为集群 leader 的入口. 构造器里面已经绑定好2888端口了.
      * This method is main function that is called to lead
      *
      * @throws IOException
      * @throws InterruptedException
      */
     void lead() throws IOException, InterruptedException {
+        // 统计了一下选举时间
         self.end_fle = Time.currentElapsedTime();
         long electionTimeTaken = self.end_fle - self.start_fle;
         self.setElectionTimeTaken(electionTimeTaken);
@@ -584,29 +596,35 @@ public class Leader extends LearnerMaster {
         LOG.info("LEADING - LEADER ELECTION TOOK - {} {}", electionTimeTaken, QuorumPeer.FLE_TIME_UNIT);
         self.start_fle = 0;
         self.end_fle = 0;
-
         zk.registerJMX(new LeaderBean(this, zk), self.jmxLocalPeerBean);
 
         try {
             self.setZabState(QuorumPeer.ZabState.DISCOVERY);
             self.tick.set(0);
+            // 1. 第一步重要的事情
+            // TODO, 这个不知道.  zkServer会清理zkDB里过期的session, 做一个snapshot
             zk.loadData();
 
             leaderStateSummary = new StateSummary(self.getCurrentEpoch(), zk.getLastProcessedZxid());
 
+            // 2. 第二步 绑定了2888端口, 然后启动.线程接受请求.
+            // TODO: 122. Leader是如何启动Follower连接监听器的?
             // Start thread that waits for connection requests from
             // new followers.
             cnxAcceptor = new LearnerCnxAcceptor();
             cnxAcceptor.start();
 
+            //===============下面太长了, 先不看.
+            // 3. TODO: ????拿到新的epoch, 这里面是怎么算的
             long epoch = getEpochToPropose(self.getId(), self.getAcceptedEpoch());
-
+            // 新一轮的epoch的zxId开始从 ([4byte: epoch] | 0) 开始算.
             zk.setZxid(ZxidUtils.makeZxid(epoch, 0));
 
             synchronized (this) {
                 lastProposed = zk.getZxid();
             }
 
+            // 这个quorumPacket应该是jute序列化协议弄出来的一个domain. 我感觉.
             newLeaderProposal.packet = new QuorumPacket(NEWLEADER, zk.getZxid(), null, null);
 
             if ((newLeaderProposal.packet.getZxid() & 0xffffffffL) != 0) {
@@ -1387,6 +1405,8 @@ public class Leader extends LearnerMaster {
         }
     }
 
+    // get the first zxid of the next epoch
+    // 拿到新一轮epoch的zxid
     @Override
     public long getEpochToPropose(long sid, long lastAcceptedEpoch) throws InterruptedException, IOException {
         synchronized (connectingFollowers) {

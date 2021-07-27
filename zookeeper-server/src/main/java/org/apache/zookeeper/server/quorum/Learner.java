@@ -72,6 +72,8 @@ import org.slf4j.LoggerFactory;
  * This class is the superclass of two of the three main actors in a ZK
  * ensemble: Followers and Observers. Both Followers and Observers share
  * a good deal of code which is moved into Peer to avoid duplication.
+ *
+ * observer 和 Follower的共同抽象, 它们都属于学习者. learner.class里面存的就是共享的逻辑.
  */
 public class Learner {
 
@@ -197,6 +199,7 @@ public class Learner {
         synchronized (leaderOs) {
             if (pp != null) {
                 messageTracker.trackSent(pp.getType());
+                // leaderOs 包装了socket, 所以, 这里就是往socket写.
                 leaderOs.writeRecord(pp, "packet");
             }
             if (flush) {
@@ -266,6 +269,7 @@ public class Learner {
 
     /**
      * Returns the address of the node we think is the leader.
+     * 就是把当前的选票拿出来, 他就是leader, 在我们的配置里面把他的ip什么的信息(QuorumServer)拿出来
      */
     protected QuorumServer findLeader() {
         QuorumServer leaderServer = null;
@@ -303,6 +307,7 @@ public class Learner {
     }
 
     /**
+     * TODO: 123. Follower是如何向Leader发起连接请求的? 就是直接建立BIO的socket, 直接对着地址连接, 连好了设置一下TCPNoDelay之类的参数. 连接是阻塞的!
      * Establish a connection with the LearnerMaster found by findLearnerMaster.
      * Followers only connect to Leaders, Observers can connect to any active LearnerMaster.
      * Retries until either initLimit time has elapsed or 5 tries have happened.
@@ -313,7 +318,7 @@ public class Learner {
     protected void connectToLeader(MultipleAddresses multiAddr, String hostname) throws IOException {
 
         this.leaderAddr = multiAddr;
-        Set<InetSocketAddress> addresses;
+        Set<InetSocketAddress> addresses; // 这是leader的ip:2888
         if (self.isMultiAddressReachabilityCheckEnabled()) {
             // even if none of the addresses are reachable, we want to try to establish connection
             // see ZOOKEEPER-3758
@@ -393,6 +398,8 @@ public class Learner {
         }
 
         private Socket connectToLeader() throws IOException, X509Exception, InterruptedException {
+
+            // 创建一个简单的Socket. BIO的!
             Socket sock = createSocket();
 
             // leader connection timeout defaults to tickTime * initLimit
@@ -474,6 +481,12 @@ public class Learner {
     }
 
     /**
+     * 这是TCP连接建立好之后的ZAB协议的握手数据包.
+     * 主要干了两件事情:
+     * 1. 把自己的zxid-sid给leader
+     * 2. 接收leader的zxid(包含新的epoch), 更新自己的zxid成leader的
+     * 3. 注意:v1.0以后报告一下leader, 然后收发期间有校验什么的, 这不太重要. 忽略细节.
+     *
      * Once connected to the leader or learner master, perform the handshake
      * protocol to establish a following / observing connection.
      * @param pktType
@@ -498,14 +511,21 @@ public class Learner {
         boa.writeRecord(li, "LearnerInfo");
         qp.setData(bsid.toByteArray());
 
+        // 1. 发给leader: 经过了jute包装, 大概是: 11-自己的zxid-自己的sid
         writePacket(qp, true);
+        // 2. 读取leader的响应. 也是收到quorumPacket包里面.
         readPacket(qp);
+        // 3. 因为是新的epoch, 这里是从leader给的zxId里面把前32位取出来了, 因为他们就代表着leader的epoch.
         final long newEpoch = ZxidUtils.getEpochFromZxid(qp.getZxid());
         if (qp.getType() == Leader.LEADERINFO) {
+            // 这应该是V1.0的leader相应回来的数据.
+
             // we are connected to a 1.0 server so accept the new epoch and read the next packet
             leaderProtocolVersion = ByteBuffer.wrap(qp.getData()).getInt();
+            // 从quorumPacket的payload里面读取数据.
             byte[] epochBytes = new byte[4];
             final ByteBuffer wrappedEpochBytes = ByteBuffer.wrap(epochBytes);
+            // 如果leader的epoch比我们的大 或者等于, 我们就接受leader的. 否则, 就说明出问题了.
             if (newEpoch > self.getAcceptedEpoch()) {
                 wrappedEpochBytes.putInt((int) self.getCurrentEpoch());
                 self.setAcceptedEpoch(newEpoch);
@@ -521,10 +541,13 @@ public class Learner {
                                       + " is less than accepted epoch, "
                                       + self.getAcceptedEpoch());
             }
+            // 4. 把自己之前的zxid, epoch响应回去
             QuorumPacket ackNewEpoch = new QuorumPacket(Leader.ACKEPOCH, lastLoggedZxid, epochBytes, null);
             writePacket(ackNewEpoch, true);
+            // 5. 开启新的epoch, 重置zxId, 说明zxId归零了!!!!!!!!!!!!!!!1 这个同步的时候不知道要怎么处理, 肯定要考虑, 不然就全量同步了.
             return ZxidUtils.makeZxid(newEpoch, 0);
         } else {
+            // 这种应该是V1.0之前版本的leader响应的数据. 很简单.
             if (newEpoch > self.getAcceptedEpoch()) {
                 self.setAcceptedEpoch(newEpoch);
             }
