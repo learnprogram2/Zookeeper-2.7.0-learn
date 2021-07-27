@@ -102,6 +102,7 @@ public class Follower extends Learner {
                 connectionTime = System.currentTimeMillis();
 
                 // 3. 把自己的zxid-sid给leader, 接收leader的zxid(包含新的epoch), 更新自己的zxid成leader的
+                //  发送自己的, 接收leader的, 再发送自己的(原来的): 宛如Http的三次握手!
                 long newEpochZxid = registerWithLeader(Leader.FOLLOWERINFO);
                 if (self.isReconfigStateChange()) {
                     throw new Exception("learned about role change");

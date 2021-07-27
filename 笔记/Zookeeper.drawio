@@ -920,7 +920,7 @@
         </mxGraphModel>
     </diagram>
     <diagram name="ZK3. Follower, Leader数据同步" id="gF0AWooflOvIGpuxUxd2">
-        <mxGraphModel dx="2978" dy="628" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+        <mxGraphModel dx="3418" dy="910" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
             <root>
                 <mxCell id="LTb61guYh8OZ6e0CkLJ9-0"/>
                 <mxCell id="LTb61guYh8OZ6e0CkLJ9-1" parent="LTb61guYh8OZ6e0CkLJ9-0"/>
@@ -1561,8 +1561,13 @@
                 <mxCell id="rF2zj_3eaPOYDtz99KDT-5" value="Observer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="LTb61guYh8OZ6e0CkLJ9-1">
                     <mxGeometry x="1526" y="1007" width="120" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="rF2zj_3eaPOYDtz99KDT-57" value="2. 注册给leader" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=9;startArrow=none;startFill=0;strokeColor=#000000;strokeWidth=1;exitX=0.75;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="LTb61guYh8OZ6e0CkLJ9-1" source="rF2zj_3eaPOYDtz99KDT-6" target="rF2zj_3eaPOYDtz99KDT-55">
+                <mxCell id="rF2zj_3eaPOYDtz99KDT-57" value="2. 三次握手注册给leader" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=9;startArrow=classic;startFill=1;strokeColor=#000000;strokeWidth=1;exitX=0.75;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="LTb61guYh8OZ6e0CkLJ9-1" source="rF2zj_3eaPOYDtz99KDT-6" target="rF2zj_3eaPOYDtz99KDT-55">
                     <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="rF2zj_3eaPOYDtz99KDT-58" value="1. 接受follower的注册: 三次握手" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=9;" vertex="1" connectable="0" parent="rF2zj_3eaPOYDtz99KDT-57">
+                    <mxGeometry x="0.4769" y="2" relative="1" as="geometry">
+                        <mxPoint x="11" y="2" as="offset"/>
+                    </mxGeometry>
                 </mxCell>
                 <mxCell id="rF2zj_3eaPOYDtz99KDT-6" value="followerLeader()&lt;br&gt;1. 直接拿到vote的leader, 使用BIO的&lt;b&gt;socket&lt;/b&gt;连接, tcpNoDealy之类的参数设一下&lt;br&gt;2. 注册到leader上: 发送sid-zxid, 接收新的zxid" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;align=left;" vertex="1" parent="LTb61guYh8OZ6e0CkLJ9-1">
                     <mxGeometry x="1235" y="1145.5" width="310" height="105" as="geometry"/>
@@ -1684,7 +1689,7 @@
                         <mxPoint x="1467" y="1086" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="rF2zj_3eaPOYDtz99KDT-55" value="run()&lt;br&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;align=left;" vertex="1" parent="LTb61guYh8OZ6e0CkLJ9-1">
+                <mxCell id="rF2zj_3eaPOYDtz99KDT-55" value="run()&lt;br&gt;&lt;b&gt;1. 和followersocket打开之后, 马上&quot;三次握手&quot;, 确认folower的zxid, 把自己的zxid发出去&lt;br&gt;&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;align=left;" vertex="1" parent="LTb61guYh8OZ6e0CkLJ9-1">
                     <mxGeometry x="1703" y="1377" width="183" height="56" as="geometry"/>
                 </mxCell>
                 <mxCell id="rF2zj_3eaPOYDtz99KDT-56" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;strokeColor=#d79b00;strokeWidth=2;dashed=1;fillColor=#ffe6cc;" edge="1" parent="LTb61guYh8OZ6e0CkLJ9-1" source="rF2zj_3eaPOYDtz99KDT-39" target="rF2zj_3eaPOYDtz99KDT-55">

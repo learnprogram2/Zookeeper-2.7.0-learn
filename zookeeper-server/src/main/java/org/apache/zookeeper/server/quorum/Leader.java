@@ -126,6 +126,7 @@ public class Leader extends LearnerMaster {
     // the follower acceptor thread
     volatile LearnerCnxAcceptor cnxAcceptor = null;
 
+    // 这里面存着所有的和learner对接的handler
     // list of all the learners, including followers and observers
     private final HashSet<LearnerHandler> learners = new HashSet<LearnerHandler>();
 

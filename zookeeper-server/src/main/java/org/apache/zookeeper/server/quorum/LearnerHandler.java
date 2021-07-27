@@ -272,12 +272,15 @@ public class LearnerHandler extends ZooKeeperThread {
      */
     private LearnerSyncThrottler syncThrottler = null;
 
+    // 什么事也没干, 就是把socket和leader(数据源)存起来了.
     LearnerHandler(Socket sock, BufferedInputStream bufferedInput, LearnerMaster learnerMaster) throws IOException {
         super("LearnerHandler-" + sock.getRemoteSocketAddress());
+        // 构造器就是存起来: socket, leader(这个是当成leaderMaster来存的), socket包装的io流
         this.sock = sock;
         this.learnerMaster = learnerMaster;
         this.bufferedInput = bufferedInput;
 
+        // 这个忽略. 默认false
         if (Boolean.getBoolean(FORCE_SNAP_SYNC)) {
             forceSnapSync = true;
             LOG.info("Forcing snapshot sync is enabled");
@@ -453,6 +456,7 @@ public class LearnerHandler extends ZooKeeperThread {
     }
 
     /**
+     * 对接一个follower的线程启动了!
      * This thread will receive packets from the peer and process them and
      * also listen to new connections from new peers.
      */
@@ -466,9 +470,11 @@ public class LearnerHandler extends ZooKeeperThread {
             bufferedOutput = new BufferedOutputStream(sock.getOutputStream());
             oa = BinaryOutputArchive.getArchive(bufferedOutput);
 
+            // 1. 从socket的输入流里面读取数据, 使用jute解码成对象.
             QuorumPacket qp = new QuorumPacket();
             ia.readRecord(qp, "packet");
 
+            // 2. 第一个包, 必须是握手包!!!!! 否则, 就不练了, 断了这个socket
             messageTracker.trackReceived(qp.getType());
             if (qp.getType() != Leader.FOLLOWERINFO && qp.getType() != Leader.OBSERVERINFO) {
                 LOG.error("First packet {} is not FOLLOWERINFO or OBSERVERINFO!", qp.toString());
@@ -476,9 +482,11 @@ public class LearnerHandler extends ZooKeeperThread {
                 return;
             }
 
+            // 如果当前这个handler是一个obServerMaster启动的, follower肯定不能连observer
             if (learnerMaster instanceof ObserverMaster && qp.getType() != Leader.OBSERVERINFO) {
                 throw new IOException("Non observer attempting to connect to ObserverMaster. type = " + qp.getType());
             }
+            // 3. 把本handler对接的learner的sid, version, zxid什么的都读取出来.
             byte[] learnerInfoData = qp.getData();
             if (learnerInfoData != null) {
                 ByteBuffer bbsid = ByteBuffer.wrap(learnerInfoData);
@@ -508,6 +516,7 @@ public class LearnerHandler extends ZooKeeperThread {
                 LOG.info("Follower sid: {} : info : {}", this.sid, followerInfo);
             }
 
+            // 把当前的learner归类, 默认是PARTICIPANT(可以投票的那种), 如果是observer也可以.
             if (qp.getType() == Leader.OBSERVERINFO) {
                 learnerType = LearnerType.OBSERVER;
             }
@@ -519,6 +528,7 @@ public class LearnerHandler extends ZooKeeperThread {
             long peerLastZxid;
             StateSummary ss = null;
             long zxid = qp.getZxid();
+            // 4. 根据follower现在的zxid, 这是要给人家算出新的epoch来.
             long newEpoch = learnerMaster.getEpochToPropose(this.getSid(), lastAcceptedEpoch);
             long newLeaderZxid = ZxidUtils.makeZxid(newEpoch, 0);
 
@@ -531,6 +541,7 @@ public class LearnerHandler extends ZooKeeperThread {
             } else {
                 byte[] ver = new byte[4];
                 ByteBuffer.wrap(ver).putInt(0x10000);
+                // 5. 这是要把leader的zxid给人家返回去. 然后收ack
                 QuorumPacket newEpochPacket = new QuorumPacket(Leader.LEADERINFO, newLeaderZxid, ver, null);
                 oa.writeRecord(newEpochPacket, "packet");
                 messageTracker.trackSent(Leader.LEADERINFO);
@@ -544,10 +555,13 @@ public class LearnerHandler extends ZooKeeperThread {
                 }
                 ByteBuffer bbepoch = ByteBuffer.wrap(ackEpochPacket.getData());
                 ss = new StateSummary(bbepoch.getInt(), ackEpochPacket.getZxid());
+                // 6. 确认了zxid之后, 要把这个follower的信息给统计起来. 不知道放起来有什么用, 但肯定有用!!!!!!!!!!!!!!
                 learnerMaster.waitForEpochAck(this.getSid(), ss);
             }
+            // 总算确定了follower之前的zxid
             peerLastZxid = ss.getLastZxid();
 
+            // 7. TODO: 这个不知道!
             // Take any necessary action if we need to send TRUNC or DIFF
             // startForwarding() will be called in all cases
             boolean needSnap = syncFollower(peerLastZxid, learnerMaster);
@@ -649,8 +663,12 @@ public class LearnerHandler extends ZooKeeperThread {
             LOG.debug("Sending UPTODATE message to {}", sid);
             queuedPackets.add(new QuorumPacket(Leader.UPTODATE, -1, null, null));
 
+
+
+            // TODO 上面已经看不懂了, 这里肯定是最终的收发消息
             while (true) {
                 qp = new QuorumPacket();
+                // 1. 阻塞读取
                 ia.readRecord(qp, "packet");
                 messageTracker.trackReceived(qp.getType());
 
