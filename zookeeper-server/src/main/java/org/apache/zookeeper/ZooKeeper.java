@@ -644,12 +644,14 @@ public class ZooKeeper implements AutoCloseable {
         this.hostProvider = hostProvider;
         ConnectStringParser connectStringParser = new ConnectStringParser(connectString);
 
+        // 这里直接创建了一个连接, 然后连上了.
         cnxn = createConnection(
             connectStringParser.getChrootPath(),
             hostProvider,
             sessionTimeout,
             this.clientConfig,
-            watcher,
+            watcher, // 这只是一个printWatcher, 打印的.
+            // 创建一个ClientCnxnSocketNIO
             getClientCnxnSocket(),
             canBeReadOnly);
         cnxn.start();

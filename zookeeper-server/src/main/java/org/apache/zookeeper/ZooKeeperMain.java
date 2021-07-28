@@ -52,6 +52,8 @@ import org.slf4j.LoggerFactory;
 /**
  * The command line client to ZooKeeper.
  *
+ * 这个类是 zkCli命令连接zkQuorum的入口类.
+ *
  */
 @InterfaceAudience.Public
 public class ZooKeeperMain {
@@ -261,17 +263,21 @@ public class ZooKeeperMain {
             }
         }
 
+        // 创建一个ZK, 构造器里面创建ClientCnxn, 并连接上.
         zk = new ZooKeeperAdmin(host, Integer.parseInt(cl.getOption("timeout")), new MyWatcher(), readOnly, clientConfig);
     }
 
     public static void main(String[] args) throws IOException, InterruptedException {
+        // 创建一个ZK, 构造器里面创建ClientCnxn, 并连接上.
         ZooKeeperMain main = new ZooKeeperMain(args);
+        // 这里就是运行 从cli 对话框里面接收到的命令了
         main.run();
     }
 
     public ZooKeeperMain(String[] args) throws IOException, InterruptedException {
         cl.parseOptions(args);
         System.out.println("Connecting to " + cl.getOption("server"));
+        // 这里看来是直接连了
         connectToZK(cl.getOption("server"));
     }
 
@@ -300,6 +306,7 @@ public class ZooKeeperMain {
                 String line;
                 Method readLine = consoleC.getMethod("readLine", String.class);
                 while ((line = (String) readLine.invoke(console, getPrompt())) != null) {
+                    // 这里就是运行 从cli 对话框里面接收到的命令了!
                     executeLine(line);
                 }
             } catch (ClassNotFoundException
@@ -337,9 +344,11 @@ public class ZooKeeperMain {
         }
     }
 
+    // 解析出来命令, 直接运行. 这个方法简单包装了一下error
     protected boolean processCmd(MyCommandOptions co) throws IOException, InterruptedException {
         boolean watch = false;
         try {
+            // 这个是运行.
             watch = processZKCmd(co);
             exitCode = ExitCode.EXECUTION_FINISHED.getValue();
         } catch (CliException ex) {
@@ -357,6 +366,7 @@ public class ZooKeeperMain {
             throw new MalformedCommandException("No command entered");
         }
 
+        // 1. 所有的command都在CommandFactory这个类里面定义着(除了连接断连退出之类的)
         if (!commandMap.containsKey(cmd)) {
             usage();
             throw new CommandNotFoundException("Command not found " + cmd);
@@ -366,6 +376,7 @@ public class ZooKeeperMain {
 
         LOG.debug("Processing {}", cmd);
 
+        // 2. 这下面是几个基础操作命令, 可以忽略. 我们就假设连上了就好了, 没那么多破事.
         if (cmd.equals("quit")) {
             zk.close();
             ServiceUtils.requestSystemExit(exitCode);
@@ -407,6 +418,7 @@ public class ZooKeeperMain {
             return false;
         }
 
+        // 3. 拿到对应的command类, 然后把zk(连接), 和输入的命令给它, 让它执行.
         // execute from commandMap
         CliCommand cliCmd = commandMapCli.get(cmd);
         if (cliCmd != null) {

@@ -58,6 +58,7 @@ abstract class ClientCnxnSocket {
     /**
      * After the length is read, a new incomingBuffer is allocated in
      * readLength() to receive the full message.
+     * 这只是一个小buffer, 这个buffer就是数据的长度!
      */
     protected ByteBuffer incomingBuffer = lenBuffer;
     protected final AtomicLong sentCount = new AtomicLong(0L);
@@ -123,6 +124,7 @@ abstract class ClientCnxnSocket {
         incomingBuffer = ByteBuffer.allocate(len);
     }
 
+    // 反序列化连接后的peer的确认的响应, 回调一下sendThread.onConnected
     void readConnectResult() throws IOException {
         if (LOG.isTraceEnabled()) {
             StringBuilder buf = new StringBuilder("0x[");
@@ -137,6 +139,7 @@ abstract class ClientCnxnSocket {
 
         ByteBufferInputStream bbis = new ByteBufferInputStream(incomingBuffer);
         BinaryInputArchive bbia = BinaryInputArchive.getArchive(bbis);
+        // 这里也是, 把连接后的响应接受回来, 反序列化成ConnectResponse.
         ConnectResponse conRsp = new ConnectResponse();
         conRsp.deserialize(bbia, "connect");
 

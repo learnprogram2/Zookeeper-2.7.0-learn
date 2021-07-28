@@ -98,8 +98,10 @@ import org.slf4j.MDC;
 
 /**
  * This class manages the socket i/o for the client. ClientCnxn maintains a list
- * of available servers to connect to and "transparently" switches servers it is
+ * of available servers to connect to and "transparently(投屏)" switches servers it is
  * connected to as needed.
+ *
+ * 本类有很多可用的server, 并且可以透明切换
  *
  */
 @SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
@@ -168,8 +170,10 @@ public class ClientCnxn {
 
     private final ZKWatchManager watchManager;
 
+    // 初始化时侯设的0. 之后应该会递增吧.
     private long sessionId;
 
+    // 初始化设置成一个byte[16]的空数组
     private byte[] sessionPasswd;
 
     /**
@@ -503,17 +507,21 @@ public class ClientCnxn {
         }
 
         private void queueEvent(WatchedEvent event, Set<Watcher> materializedWatchers) {
+            // 第一次连接成功的event虽然type是null, 但是新的sessionState可不是Disconnected哦!
+            // 新的sessionState应该是KeeperState.ConnectedReadOnly 或者是 KeeperState.SyncConnected
             if (event.getType() == EventType.None && sessionState == event.getState()) {
                 return;
             }
             sessionState = event.getState();
             final Set<Watcher> watchers;
             if (materializedWatchers == null) {
-                // materialize the watchers based on the event
+                // materialize(具体化) the watchers based on the event
+                // 再watcherManager里面找到对这个时间感兴趣的watchers. 不能追的太深.
                 watchers = watchManager.materialize(event.getState(), event.getType(), event.getPath());
             } else {
                 watchers = new HashSet<>(materializedWatchers);
             }
+            // 往事件队列里添加一个时间: 包含事件类型, 连接状态, 事件发生的path, 和对此事件感兴趣的watchers
             WatcherSetEventPair pair = new WatcherSetEventPair(watchers, event);
             // queue the pair (watch set & event) for later processing
             waitingEvents.add(pair);
@@ -548,13 +556,14 @@ public class ClientCnxn {
             try {
                 isRunning = true;
                 while (true) {
+                    // 这个好像比较简单, 直接就是拿事件组开始处理, <watchedEvent, watchers>
                     Object event = waitingEvents.take();
                     if (event == eventOfDeath) {
                         wasKilled = true;
                     } else {
                         processEvent(event);
                     }
-                    if (wasKilled) {
+                    if (wasKilled) { // 这里就是说, 如果kill事件来了, 但是还有没有处理完的事件, 还是会接着处理的.
                         synchronized (waitingEvents) {
                             if (waitingEvents.isEmpty()) {
                                 isRunning = false;
@@ -571,8 +580,9 @@ public class ClientCnxn {
         }
 
         private void processEvent(Object event) {
-            try {
+            try { // 正常的事件就是: WatcherSetEventPair
                 if (event instanceof WatcherSetEventPair) {
+                    // 很简单, 就是把watcher取出来, 逐个回调.
                     // each watcher will process the event
                     WatcherSetEventPair pair = (WatcherSetEventPair) event;
                     for (Watcher watcher : pair.watchers) {
@@ -864,6 +874,10 @@ public class ClientCnxn {
     /**
      * This class services the outgoing request queue and generates the heart
      * beats. It also spawns the ReadThread.
+     *
+     * 发送request队列里的请求, 然后发送心跳.
+     * 还会充当ReadThread
+     *
      */
     class SendThread extends ZooKeeperThread {
 
@@ -871,6 +885,7 @@ public class ClientCnxn {
         private final ClientCnxnSocket clientCnxnSocket;
         private boolean isFirstConnect = true;
 
+        // TODO: 这里是普通的响应!!!!!!!!
         void readResponse(ByteBuffer incomingBuffer) throws IOException {
             ByteBufferInputStream bbis = new ByteBufferInputStream(incomingBuffer);
             BinaryInputArchive bbia = BinaryInputArchive.getArchive(bbis);
@@ -883,7 +898,7 @@ public class ClientCnxn {
                     Long.toHexString(sessionId),
                     ((System.nanoTime() - lastPingSentNs) / 1000000));
                 return;
-              case AUTHPACKET_XID:
+            case AUTHPACKET_XID:
                 LOG.debug("Got auth session id: 0x{}", Long.toHexString(sessionId));
                 if (replyHdr.getErr() == KeeperException.Code.AUTHFAILED.intValue()) {
                     changeZkState(States.AUTH_FAILED);
@@ -891,7 +906,7 @@ public class ClientCnxn {
                         Watcher.Event.KeeperState.AuthFailed, null));
                     eventThread.queueEventOfDeath();
                 }
-              return;
+                return;
             case NOTIFICATION_XID:
                 LOG.debug("Got notification session id: 0x{}",
                     Long.toHexString(sessionId));
@@ -1000,6 +1015,10 @@ public class ClientCnxn {
 
         /**
          * Setup session, previous watches, authentication.
+         *
+         * 这个是当前clientCnxn和一个zkserver的nio socket连接好之后的回调函数.
+         *
+         * 我猜测, 这里应该会修改当前clientCnxn的状态, 当前是connection, 之后要变成connected. 不知道什么时候变. 如果不变的话, 说明这个只连接了一台zkPeer
          */
         void primeConnection() throws IOException {
             LOG.info(
@@ -1007,10 +1026,12 @@ public class ClientCnxn {
                 clientCnxnSocket.getLocalSocketAddress(),
                 clientCnxnSocket.getRemoteSocketAddress());
             isFirstConnect = false;
+            // 我们第一次连进来, 这里应该就是 0;
             long sessId = (seenRwServerBefore) ? sessionId : 0;
-            ConnectRequest conReq = new ConnectRequest(0, lastZxid, sessionTimeout, sessId, sessionPasswd);
+            ConnectRequest conReq = new ConnectRequest(0, lastZxid, sessionTimeout, sessId, sessionPasswd); // zookeeper.session.timeout.ms默认18000
             // We add backwards since we are pushing into the front
             // Only send if there's a pending watch
+            // 监控, 先掠过.
             if (!clientConfig.getBoolean(ZKClientConfig.DISABLE_AUTO_WATCH_RESET)) {
                 List<String> dataWatches = watchManager.getDataWatchList();
                 List<String> existWatches = watchManager.getExistWatchList();
@@ -1088,7 +1109,10 @@ public class ClientCnxn {
                         null,
                         null));
             }
+
+            // 1. 这是连好之后做的第一件正经事. 包装了一个连接的request放在队列里: 这个request包含: (协议版本号0, lastZxid, sessionTimeout, sessId, sessionPasswd)
             outgoingQueue.addFirst(new Packet(null, null, conReq, null, null, readOnly));
+            // 2. 这个是叫了一下clientCnxnSocket, 应该是让它把队列里的连接请求发出去: 就是让socket的selectionKey的write, read都注册上去了.
             clientCnxnSocket.connectionPrimed();
             LOG.debug("Session establishment request sent on {}", clientCnxnSocket.getRemoteSocketAddress());
         }
@@ -1140,9 +1164,11 @@ public class ClientCnxn {
             }
             changeZkState(States.CONNECTING);
 
+            // 既然练到了指定的server , 这里吧当前sendThread线程的名字设置了一下
             String hostPort = addr.getHostString() + ":" + addr.getPort();
             MDC.put("myid", hostPort);
             setName(getName().replaceAll("\\(.*\\)", "(" + hostPort + ")"));
+            // 下面是sasl的登录, 忽略.
             if (clientConfig.isSaslClientEnabled()) {
                 try {
                     if (zooKeeperSaslClient != null) {
@@ -1164,6 +1190,7 @@ public class ClientCnxn {
             }
             logStartConnect(addr);
 
+            // 直接用clientCnxnSocket连接server地址.
             clientCnxnSocket.connect(addr);
         }
 
@@ -1174,17 +1201,21 @@ public class ClientCnxn {
             }
         }
 
+        // 发送线程的工作!
         @Override
         public void run() {
+            // 这个只是重置了一下clientCnxnSocket里面的统计数据.
             clientCnxnSocket.introduce(this, sessionId, outgoingQueue);
             clientCnxnSocket.updateNow();
             clientCnxnSocket.updateLastSendAndHeard();
-            int to;
+            int to; // 这个timeout应该是逐渐的从 readTimeout 或者是connectTimeout开始减少, 每一轮就是这个timeout事件. sessionTimeout * 2 / 3
             long lastPingRwServer = Time.currentElapsedTime();
-            final int MAX_SEND_PING_INTERVAL = 10000; //10 seconds
+            final int MAX_SEND_PING_INTERVAL = 10000; //10 seconds 10s心跳一下
             InetSocketAddress serverAddress = null;
             while (state.isAlive()) {
                 try {
+                    // 1. 刚开始启动, 肯定是走进去的. 初始化连接.
+                    // 遍历找到一个server的地址, 使用clientCnxnSocket.connect(addr)创建nio的socket注册到selector上.
                     if (!clientCnxnSocket.isConnected()) {
                         // don't re-establish connection if we are closing
                         if (closing) {
@@ -1194,59 +1225,25 @@ public class ClientCnxn {
                             serverAddress = rwServerAddress;
                             rwServerAddress = null;
                         } else {
+                            // 别说别的, 这个是遍历serverList, 逐个拿ip:2181地址. 每次往后拿一个
                             serverAddress = hostProvider.next(1000);
                         }
                         onConnecting(serverAddress);
+                        // 直接用clientCnxnSOcket连接: 创建niosocket, 注册到selector上.
                         startConnect(serverAddress);
                         clientCnxnSocket.updateLastSendAndHeard();
                     }
 
-                    if (state.isConnected()) {
-                        // determine whether we need to send an AuthFailed event.
-                        if (zooKeeperSaslClient != null) {
-                            boolean sendAuthEvent = false;
-                            if (zooKeeperSaslClient.getSaslState() == ZooKeeperSaslClient.SaslState.INITIAL) {
-                                try {
-                                    zooKeeperSaslClient.initialize(ClientCnxn.this);
-                                } catch (SaslException e) {
-                                    LOG.error("SASL authentication with Zookeeper Quorum member failed.", e);
-                                    changeZkState(States.AUTH_FAILED);
-                                    sendAuthEvent = true;
-                                }
-                            }
-                            KeeperState authState = zooKeeperSaslClient.getKeeperState();
-                            if (authState != null) {
-                                if (authState == KeeperState.AuthFailed) {
-                                    // An authentication error occurred during authentication with the Zookeeper Server.
-                                    changeZkState(States.AUTH_FAILED);
-                                    sendAuthEvent = true;
-                                } else {
-                                    if (authState == KeeperState.SaslAuthenticated) {
-                                        sendAuthEvent = true;
-                                    }
-                                }
-                            }
+                    // 上面刚启动, 这里是连不上的!!
+                    // 代码: 删掉了, 这一块就是connection建立好后的sasl认证, 而且根据readTimeout或者是connectTimeout时间, 更新了一下每一轮的超时时间to,
+                    // 无所谓 我们暂时忽略掉. 可以看git历史看sasl认证的代码.
+                    // 代码......
 
-                            if (sendAuthEvent) {
-                                eventThread.queueEvent(new WatchedEvent(Watcher.Event.EventType.None, authState, null));
-                                if (state == States.AUTH_FAILED) {
-                                    eventThread.queueEventOfDeath();
-                                }
-                            }
-                        }
-                        to = readTimeout - clientCnxnSocket.getIdleRecv();
-                    } else {
-                        to = connectTimeout - clientCnxnSocket.getIdleRecv();
-                    }
 
-                    if (to <= 0) {
-                        String warnInfo = String.format(
-                            "Client session timed out, have not heard from server in %dms for session id 0x%s",
-                            clientCnxnSocket.getIdleRecv(),
-                            Long.toHexString(sessionId));
-                        LOG.warn(warnInfo);
-                        throw new SessionTimeoutException(warnInfo);
-                    }
+
+                    // 3. 等连接建立好, 我们发送好sessionid的连接包, 并受到响应后, 然后在onconnection方法里发送连接事件. eventThread最终会吧我们当前的clientCnxn的状态修改为CONNECTED
+                    //      当然也可能是readOnly的connected, 但这都是连接啊!
+                    // 这就是发送ping包: 发送就是放到queue里面
                     if (state.isConnected()) {
                         //1000(1 second) is to prevent race condition missing to send the second ping
                         //also make sure not to send too many pings when readTimeout is small
@@ -1277,6 +1274,8 @@ public class ClientCnxn {
                         to = Math.min(to, pingRwTimeout - idlePingRwServer);
                     }
 
+                    // 2. 刚发送连接的请求, 应该会跑到这里来.
+                    // 3. 正常的请求发送, 接收包什么的, 都会跑到这里来.
                     clientCnxnSocket.doTransport(to, pendingQueue, ClientCnxn.this);
                 } catch (Throwable e) {
                     if (closing) {
@@ -1399,6 +1398,10 @@ public class ClientCnxn {
          * Callback invoked by the ClientCnxnSocket once a connection has been
          * established.
          *
+         * 这个方法是socket连接建立好, 然后发送了自己的sessionId, 收到确认消息了之后, 回调的.
+         *
+         * conRsp.getTimeOut(), this.sessionId, conRsp.getPasswd(), isRO
+         *
          * @param _negotiatedSessionTimeout
          * @param _sessionId
          * @param _sessionPasswd
@@ -1412,6 +1415,7 @@ public class ClientCnxn {
             boolean isRO) throws IOException {
             negotiatedSessionTimeout = _negotiatedSessionTimeout;
             if (negotiatedSessionTimeout <= 0) {
+                // 如果连接超时鳓.
                 changeZkState(States.CLOSED);
 
                 eventThread.queueEvent(new WatchedEvent(Watcher.Event.EventType.None, Watcher.Event.KeeperState.Expired, null));
@@ -1431,8 +1435,10 @@ public class ClientCnxn {
             readTimeout = negotiatedSessionTimeout * 2 / 3;
             connectTimeout = negotiatedSessionTimeout / hostProvider.size();
             hostProvider.onConnected();
+            // 把自己的sessionid和pw存起来.
             sessionId = _sessionId;
             sessionPasswd = _sessionPasswd;
+            // 连上了, 修改当前的clietnCnxn的连接状态.
             changeZkState((isRO) ? States.CONNECTEDREADONLY : States.CONNECTED);
             seenRwServerBefore |= !isRO;
             LOG.info(
@@ -1441,6 +1447,7 @@ public class ClientCnxn {
                 Long.toHexString(sessionId),
                 negotiatedSessionTimeout,
                 (isRO ? " (READ-ONLY mode)" : ""));
+            // 连上之后发送了一个event!!! event就是很重要!!!!!! 这里面会把当前clientCnxn的状态变更掉.
             KeeperState eventState = (isRO) ? KeeperState.ConnectedReadOnly : KeeperState.SyncConnected;
             eventThread.queueEvent(new WatchedEvent(Watcher.Event.EventType.None, eventState, null));
         }

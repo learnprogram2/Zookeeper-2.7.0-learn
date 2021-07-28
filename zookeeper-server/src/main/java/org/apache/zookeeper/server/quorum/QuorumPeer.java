@@ -2275,6 +2275,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
             QuorumServer myNewQS = newMembers.get(getId());
             if (myNewQS != null && myNewQS.clientAddr != null && !myNewQS.clientAddr.equals(oldClientAddr)) {
+                // 这个是2181
                 cnxnFactory.reconfigure(myNewQS.clientAddr);
                 updateThreadName();
             }

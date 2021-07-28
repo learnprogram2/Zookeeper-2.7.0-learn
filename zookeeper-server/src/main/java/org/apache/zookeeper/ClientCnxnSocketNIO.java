@@ -62,6 +62,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
     }
 
     /**
+     * 这个是和一个zkQuorumPeer的socketChannel的收发数据
      * @throws InterruptedException
      * @throws IOException
      */
@@ -71,30 +72,38 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
             throw new IOException("Socket is null!");
         }
         if (sockKey.isReadable()) {
+            // 发送好连接包之后肯定是接受消息了.
             int rc = sock.read(incomingBuffer);
             if (rc < 0) {
                 throw new EndOfStreamException("Unable to read additional data from server sessionid 0x"
                                                + Long.toHexString(sessionId)
                                                + ", likely server has closed socket");
             }
+            // 1. 先读取package的长度, 这个基本上都能读出来4个字节吧, 除非读不出来, 那下次再读嘛.
             if (!incomingBuffer.hasRemaining()) {
                 incomingBuffer.flip();
                 if (incomingBuffer == lenBuffer) {
+                    // 2. 第一次读length的时候, 就进这里.
                     recvCount.getAndIncrement();
                     readLength();
                 } else if (!initialized) {
+                    // 读完了length, 第二次肯定是读完了package的消息才会进来.
+                    // 3. 反序列化连接后的peer的确认的响应, 回调一下sendThread.onConnected
                     readConnectResult();
+                    // 再开启读取和发送.
                     enableRead();
                     if (findSendablePacket(outgoingQueue, sendThread.tunnelAuthInProgress()) != null) {
                         // Since SASL authentication has completed (if client is configured to do so),
                         // outgoing packets waiting in the outgoingQueue can now be sent.
                         enableWrite();
                     }
+                    // 更新一下buffer , 算是正式连接成功了
                     lenBuffer.clear();
                     incomingBuffer = lenBuffer;
                     updateLastHeard();
                     initialized = true;
                 } else {
+                    // 4. 这里是普通的相应来临的时候. 这个肯定是放到来的队列里面.
                     sendThread.readResponse(incomingBuffer);
                     lenBuffer.clear();
                     incomingBuffer = lenBuffer;
@@ -103,6 +112,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
             }
         }
         if (sockKey.isWritable()) {
+            // socketChannel刚连接上的时候, outgoingQue里面就有一条连接的request了, 里面放着我们的lastZxid, sessionid什么的东西.
             Packet p = findSendablePacket(outgoingQueue, sendThread.tunnelAuthInProgress());
 
             if (p != null) {
@@ -116,10 +126,15 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
                     }
                     p.createBB();
                 }
+                // 直接往socketChannel里面写序列化好的packet, 里面装着request, header之类的数据
                 sock.write(p.bb);
                 if (!p.bb.hasRemaining()) {
+                    // 发送成功了, 就统计一下, 把这个request出队, 还用了一下校验, 必须按照顺序出队发送
                     sentCount.getAndIncrement();
                     outgoingQueue.removeFirstOccurrence(p);
+
+                    // 这里是如果发送的是一个请求(就是正常的CRUD之类的请求), 是需要响应的, 我们就把这个package放到pendingQueue里面等待响应.
+                    // 我们这个连接包, 不会期待响应的, 因为requestHeader是null.
                     if (p.requestHeader != null
                         && p.requestHeader.getType() != OpCode.ping
                         && p.requestHeader.getType() != OpCode.auth) {
@@ -154,6 +169,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
         }
     }
 
+    // 这个我们就可以看成是直接从 outgoingQueue 里面出队一条待发送的消息就好了.
     private Packet findSendablePacket(LinkedBlockingDeque<Packet> outgoingQueue, boolean tunneledAuthInProgres) {
         if (outgoingQueue.isEmpty()) {
             return null;
@@ -258,14 +274,19 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
     void registerAndConnect(SocketChannel sock, InetSocketAddress addr) throws IOException {
         sockKey = sock.register(selector, SelectionKey.OP_CONNECT);
         boolean immediateConnect = sock.connect(addr);
+        // 这里是如果马上就连上了, 就开始建立session之类的了. 我们假设马上连不上. 事实上一般也马上连不上
         if (immediateConnect) {
             sendThread.primeConnection();
         }
     }
 
+    // 1. 这里是ClientCnxn里面的sendThread循环发送的时候, 和server建立连接的地方
     @Override
     void connect(InetSocketAddress addr) throws IOException {
+        // 1. 建立了一个NIo的socket.
         SocketChannel sock = createSock();
+
+        // 2. 注册到selector上
         try {
             registerAndConnect(sock, addr);
         } catch (UnresolvedAddressException | UnsupportedAddressTypeException | SecurityException | IOException e) {
@@ -324,11 +345,14 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
         selector.wakeup();
     }
 
+
+    // 2. 这里是和server建立连接之后, 接受xxx的东西. 我感觉是.
     @Override
     void doTransport(
-        int waitTimeOut,
+        int waitTimeOut, // 这个是clientCnxn一轮收取/连接的总timeout时间剩下的timeout时间.
         Queue<Packet> pendingQueue,
         ClientCnxn cnxn) throws IOException, InterruptedException {
+        // 1. 先收取.
         selector.select(waitTimeOut);
         Set<SelectionKey> selected;
         synchronized (this) {
@@ -337,20 +361,26 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
         // Everything below and until we get back to the select is
         // non blocking, so time is effectively a constant. That is
         // Why we just have to do this once, here
+        // 这个就是说, 接下来都不阻塞了, 我们就使用一个now就好了.
         updateNow();
         for (SelectionKey k : selected) {
             SocketChannel sc = ((SocketChannel) k.channel());
             if ((k.readyOps() & SelectionKey.OP_CONNECT) != 0) {
+                // 2. 我们之前发送的连接, 在这里连好!!!
                 if (sc.finishConnect()) {
+                    // 记一下这个server的一些时间点.
                     updateLastSendAndHeard();
                     updateSocketAddresses();
+                    // 2. 连好之后, 要告诉sendThread!!!
                     sendThread.primeConnection();
                 }
             } else if ((k.readyOps() & (SelectionKey.OP_READ | SelectionKey.OP_WRITE)) != 0) {
+                // 3. 这个是做io了!!!!! 读写. 这个是pendingQue!
                 doIO(pendingQueue, cnxn);
             }
         }
         if (sendThread.getZkState().isConnected()) {
+            // 这个看起来是, 只要连上了, 就尝试发一下
             if (findSendablePacket(outgoingQueue, sendThread.tunnelAuthInProgress()) != null) {
                 enableWrite();
             }
@@ -376,6 +406,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
     }
 
     synchronized void enableWrite() {
+        // 这个是如果socketKey没有OP_WRITE的兴趣, 就马上让他也对write感兴趣, 有数据该发送了!!!!
         int i = sockKey.interestOps();
         if ((i & SelectionKey.OP_WRITE) == 0) {
             sockKey.interestOps(i | SelectionKey.OP_WRITE);
