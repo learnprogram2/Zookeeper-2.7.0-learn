@@ -153,6 +153,7 @@ public class LearnerSessionTracker extends UpgradeableSessionTracker {
         return touchTable.getAndSet(new ConcurrentHashMap<Long, Integer>());
     }
 
+    // learner只会标记一个id????
     public long createSession(int sessionTimeout) {
         if (localSessionsEnabled) {
             return localSessionTracker.createSession(sessionTimeout);

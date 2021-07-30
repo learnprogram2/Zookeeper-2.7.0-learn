@@ -50,6 +50,7 @@ public class ExpiryQueue<E> {
         nextExpirationTime.set(roundToNextInterval(Time.currentElapsedTime()));
     }
 
+    // 这个是要让time变成expireationInterval的倍数.
     private long roundToNextInterval(long time) {
         return (time / expirationInterval + 1) * expirationInterval;
     }
@@ -74,6 +75,8 @@ public class ExpiryQueue<E> {
     }
 
     /**
+     * TODO 148. session过分桶管理的代码应该被移到这列了.
+     *
      * Adds or updates expiration time for element in queue, rounding the
      * timeout to the expiry interval bucketed used by this queue.
      * @param elem     element to add/update
@@ -84,6 +87,7 @@ public class ExpiryQueue<E> {
     public Long update(E elem, int timeout) {
         Long prevExpiryTime = elemMap.get(elem);
         long now = Time.currentElapsedTime();
+        // 下次过期时间, 变成统一的一个expirationTime的倍数.
         Long newExpiryTime = roundToNextInterval(now + timeout);
 
         if (newExpiryTime.equals(prevExpiryTime)) {
@@ -91,6 +95,7 @@ public class ExpiryQueue<E> {
             return null;
         }
 
+        // 分桶就是每一个expiartionTime一个桶
         // First add the elem to the new expiry time bucket in expiryMap.
         Set<E> set = expiryMap.get(newExpiryTime);
         if (set == null) {

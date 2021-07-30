@@ -982,6 +982,8 @@ public class Leader extends LearnerMaster {
     }
 
     /**
+     *
+     * 这个ACK里面有很多东西! 有request的commit
      * Keep a count of acks that are received by the leader for a particular
      * proposal
      *

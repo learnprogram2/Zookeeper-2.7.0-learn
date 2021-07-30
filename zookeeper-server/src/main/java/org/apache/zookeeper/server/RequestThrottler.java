@@ -136,6 +136,8 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
         dropStaleRequests = drop;
     }
 
+    // 这个线程是干什么的.
+    // 这肯定是处理连接包请求的地方: 把队列里的request交给ZKS了, zks本身就是一个处理链条, 我们就把这个类堪称阻塞队列, 然后zks一直读取就好了.
     @Override
     public void run() {
         try {
@@ -143,8 +145,9 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
                 if (killed) {
                     break;
                 }
-
+                // 拿出来request
                 Request request = submittedRequests.take();
+
                 if (Request.requestOfDeath == request) {
                     break;
                 }

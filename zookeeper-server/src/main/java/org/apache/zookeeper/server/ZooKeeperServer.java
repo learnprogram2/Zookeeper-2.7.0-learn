@@ -660,6 +660,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         long id = cnxn.getSessionId();
         int to = cnxn.getSessionTimeout();
         if (!sessionTracker.touchSession(id, to)) {
+            // 过期的session就会跑到这里来报错.
             throw new MissingSessionException("No session with sessionid 0x"
                                               + Long.toHexString(id)
                                               + " exists, probably expired and removed");
@@ -999,13 +1000,19 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             // Possible since it's just deserialized from a packet on the wire.
             passwd = new byte[0];
         }
+        // 1. 拿到一个递增的sessionid.
         long sessionId = sessionTracker.createSession(timeout);
+
+        // 2. 这里生成了一个16位的passwd, 因为传过来的就是16位的空byte数组.
         Random r = new Random(sessionId ^ superSecret);
         r.nextBytes(passwd);
+
         ByteBuffer to = ByteBuffer.allocate(4);
         to.putInt(timeout);
         cnxn.setSessionId(sessionId);
+        // 3. 这里是包装了一个request, 不知道干什么, 放入限流的组件里, 这是限流了?
         Request si = new Request(cnxn, sessionId, 0, OpCode.createSession, to, null);
+
         submitRequest(si);
         return sessionId;
     }
@@ -1043,6 +1050,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
     }
 
+    // 我去!!!!! 经过了链条一圈, 最终会跑到这里来.
     public void finishSessionInit(ServerCnxn cnxn, boolean valid) {
         // register with JMX
         try {
@@ -1063,7 +1071,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 valid ? cnxn.getSessionTimeout() : 0,
                 valid ? cnxn.getSessionId() : 0, // send 0 if session is no
                 // longer valid
-                valid ? generatePasswd(cnxn.getSessionId()) : new byte[16]);
+                valid ? generatePasswd(cnxn.getSessionId()) : new byte[16]); // 这个生成passwd的代码绝对有重复, 刚开始进来的时候已经生成过了/.
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             BinaryOutputArchive bos = BinaryOutputArchive.getArchive(baos);
             bos.writeInt(-1, "len");
@@ -1142,6 +1150,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         requestThrottler.submitRequest(si);
     }
 
+    // 我操, 生成了sessionId, 配置了一下ServerCnxn, 又跑到这里来了.
+    // 交给firstProcessor处理. 这个在不同的角色里肯定不一样
     public void submitRequestNow(Request si) {
         if (firstProcessor == null) {
             synchronized (this) {
@@ -1162,11 +1172,16 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             }
         }
         try {
-            touch(si.cnxn);
+            // TODO ! : 这里都是在更新session: 无论是ping还是什么请求, 都会更新
+            touch(si.cnxn); // 我感觉是 更新一下cnxn的sessionTimeout事件
             boolean validpacket = Request.isValid(si.type);
             if (validpacket) {
                 setLocalSessionFlag(si);
+
+                // 1. 第一步, 交给firstProcessor处理. 这个在不同的角色里肯定不一样
                 firstProcessor.processRequest(si);
+
+                // 这个应该是连接还在的话, 就统计一下.
                 if (si.cnxn != null) {
                     incInProcess();
                 }
@@ -1177,6 +1192,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 new UnimplementedRequestProcessor().processRequest(si);
             }
         } catch (MissingSessionException e) {
+            // 2. 如果session过期, 就来这里. 什么也没干!!!!
             LOG.debug("Dropping request.", e);
             // Update request accounting/throttling limits
             requestFinished(si);
@@ -1379,28 +1395,29 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return connThrottle.getDropChance();
     }
 
+
+    // 这里是处理zk(客户端)的连接请求
+    // 接收到的握手包应该是: (协议版本号0, lastZxid, sessionTimeout, sessId, sessionPasswd)
     @SuppressFBWarnings(value = "IS2_INCONSISTENT_SYNC", justification = "the value won't change after startup")
     public void processConnectRequest(ServerCnxn cnxn, ByteBuffer incomingBuffer)
         throws IOException, ClientCnxnLimitException {
 
+        // 1. 反序列化成对象: (协议版本号0, lastZxid, sessionTimeout, sessId, sessionPasswd)
         BinaryInputArchive bia = BinaryInputArchive.getArchive(new ByteBufferInputStream(incomingBuffer));
         ConnectRequest connReq = new ConnectRequest();
         connReq.deserialize(bia, "connect");
-        LOG.debug(
-            "Session establishment request from client {} client's lastZxid is 0x{}",
-            cnxn.getRemoteSocketAddress(),
-            Long.toHexString(connReq.getLastZxidSeen()));
 
         long sessionId = connReq.getSessionId();
         int tokensNeeded = 1;
+        // 2. 如果有限流, 就限一下流. 假设不限流.
         if (connThrottle.isConnectionWeightEnabled()) {
-            if (sessionId == 0) {
+            if (sessionId == 0) { // sessionid是0, 肯定就是第一次连接
                 if (localSessionEnabled) {
                     tokensNeeded = connThrottle.getRequiredTokensForLocal();
                 } else {
                     tokensNeeded = connThrottle.getRequiredTokensForGlobal();
                 }
-            } else {
+            } else { // 这个不知道是什么
                 tokensNeeded = connThrottle.getRequiredTokensForRenew();
             }
         }
@@ -1442,19 +1459,23 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
         int sessionTimeout = connReq.getTimeOut();
         byte[] passwd = connReq.getPasswd();
-        int minSessionTimeout = getMinSessionTimeout();
+        int minSessionTimeout = getMinSessionTimeout(); // 默认tickTime * 2
         if (sessionTimeout < minSessionTimeout) {
             sessionTimeout = minSessionTimeout;
         }
-        int maxSessionTimeout = getMaxSessionTimeout();
+        int maxSessionTimeout = getMaxSessionTimeout(); // 默认tickTime * 20
         if (sessionTimeout > maxSessionTimeout) {
             sessionTimeout = maxSessionTimeout;
         }
+
+        // 1. 接收到的握手信息, 设置给cnxn这个维持者.
         cnxn.setSessionTimeout(sessionTimeout);
         // We don't want to receive any packets until we are sure that the
         // session is setup
         cnxn.disableRecv();
         if (sessionId == 0) {
+            // 2. sessionId=0, 说明是client第一个session
+            // 创建一个我们这边的递增的sessionId, 然后配置一下cnxn.
             long id = createSession(cnxn, passwd, sessionTimeout);
             LOG.debug(
                 "Client attempting to establish new session: session = 0x{}, zxid = 0x{}, timeout = {}, address = {}",
@@ -1463,6 +1484,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 connReq.getTimeOut(),
                 cnxn.getRemoteSocketAddress());
         } else {
+            // 3. 这个是client重新连接/重新发送connectionReq这种握手包, 更新session了. 我感觉是.
+            // 先不看, 看正常的创建session.
             validateSession(cnxn, sessionId);
             LOG.debug(
                 "Client attempting to renew session: session = 0x{}, zxid = 0x{}, timeout = {}, address = {}",
@@ -1615,6 +1638,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         RequestHeader h = new RequestHeader();
         h.deserialize(bia, "header");
 
+        //
         // Need to increase the outstanding request count first, otherwise
         // there might be a race condition that it enabled recv after
         // processing request and then disabled when check throttling.
@@ -1626,6 +1650,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         // in cnxn, since it will close the cnxn anyway.
         cnxn.incrOutstandingAndCheckThrottle(h);
 
+        // 如果是认证的请求, 应该走这里.
         // Through the magic of byte buffers, txn will not be
         // pointing
         // to the start of the txn
@@ -1687,6 +1712,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                     checkRequestSizeWhenMessageReceived(length);
                     si.setLargeRequestSize(length);
                 }
+                // 这个正常的请求, 就是走一遍processor链条.
                 si.setOwner(ServerCnxn.me);
                 submitRequest(si);
             }

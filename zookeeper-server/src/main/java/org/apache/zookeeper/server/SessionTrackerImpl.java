@@ -83,6 +83,8 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
     }
 
     /**
+     * TODO 146. 如何生成全局唯一的sessionId
+     *
      * Generates an initial sessionId.
      *
      * <p>High order 1 byte is serverId, next 5 bytes are from timestamp, and low order 2 bytes are 0s.
@@ -111,6 +113,7 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
         this.expirer = expirer;
         this.sessionExpiryQueue = new ExpiryQueue<SessionImpl>(tickTime);
         this.sessionsWithTimeout = sessionsWithTimeout;
+        // 初始化!!!!!!!!!
         this.nextSessionId.set(initializeNextSessionId(serverId));
         for (Entry<Long, Integer> e : sessionsWithTimeout.entrySet()) {
             trackSession(e.getKey(), e.getValue());
@@ -163,6 +166,7 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
                     continue;
                 }
 
+                // 这其实一直在清理
                 for (SessionImpl s : sessionExpiryQueue.poll()) {
                     ServerMetrics.getMetrics().STALE_SESSIONS_EXPIRED.add(1);
                     setSessionClosing(s.sessionId);
@@ -192,6 +196,7 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
         return true;
     }
 
+    // TODO 151. zk 客户端 ping的时候肯定会更新session
     private void updateSessionExpiry(SessionImpl s, int timeout) {
         logTraceTouchSession(s.sessionId, timeout, "");
         sessionExpiryQueue.update(s, timeout);
@@ -258,6 +263,7 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
     }
 
     public long createSession(int sessionTimeout) {
+        // 拿一个递增id
         long sessionId = nextSessionId.getAndIncrement();
         trackSession(sessionId, sessionTimeout);
         return sessionId;
@@ -267,11 +273,14 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
     public synchronized boolean trackSession(long id, int sessionTimeout) {
         boolean added = false;
 
+        // 为这个sessionId创建一个Session, 包含Id和timeout.
         SessionImpl session = sessionsById.get(id);
         if (session == null) {
             session = new SessionImpl(id, sessionTimeout);
         }
 
+
+        // TODO 147. session只会保护在sessionsById里面存着, 然后再下面的SessionExpireQueue里面存折.
         // findbugs2.0.3 complains about get after put.
         // long term strategy would be use computeIfAbsent after JDK 1.8
         SessionImpl existedSession = sessionsById.putIfAbsent(id, session);

@@ -70,18 +70,27 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
         return self.leader;
     }
 
+    // 看看怎么初始化链条的:
+    // 据说是:  PrepRequestProcessor -> ProposalRequestProcessor -> CommitProcessor -> Leader.ToBeAppliedRequestProcessor -> FinalRequestProcessor
     @Override
     protected void setupRequestProcessors() {
         RequestProcessor finalProcessor = new FinalRequestProcessor(this);
+        // 这就是包装了一下, 现在的链条是:
         RequestProcessor toBeAppliedProcessor = new Leader.ToBeAppliedRequestProcessor(finalProcessor, getLeader());
+        // 这个就更邪乎了, 现在的链条应该是: commitProcessor -> [leader -> finalProcessor]
         commitProcessor = new CommitProcessor(toBeAppliedProcessor, Long.toString(getServerId()), false, getZooKeeperServerListener());
         commitProcessor.start();
+        // 妈的, 现在就更邪乎了, 往前加了一个: proposalProcessor -> commitProcessor -> [leader -> finalProcessor]
+
         ProposalRequestProcessor proposalProcessor = new ProposalRequestProcessor(this, commitProcessor);
         proposalProcessor.initialize();
+        // prepRequestProcessor -> proposalProcessor -> commitProcessor -> [leader -> finalProcessor]
         prepRequestProcessor = new PrepRequestProcessor(this, proposalProcessor);
         prepRequestProcessor.start();
+        // firstProcessor -> prepRequestProcessor -> proposalProcessor -> commitProcessor -> [leader -> finalProcessor]
         firstProcessor = new LeaderRequestProcessor(this, prepRequestProcessor);
 
+        // 定期删除没用的znode节点
         setupContainerManager();
     }
 

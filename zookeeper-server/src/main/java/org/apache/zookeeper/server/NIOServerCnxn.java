@@ -138,6 +138,8 @@ public class NIOServerCnxn extends ServerCnxn {
     /**
      * sendBuffer pushes a byte buffer onto the outgoing buffer queue for
      * asynchronous writes.
+     *
+     * 最终竟然会跑到这里来.
      */
     public void sendBuffer(ByteBuffer... buffers) {
         if (LOG.isTraceEnabled()) {
@@ -184,8 +186,10 @@ public class NIOServerCnxn extends ServerCnxn {
             incomingBuffer.flip();
             packetReceived(4 + incomingBuffer.remaining());
             if (!initialized) {
+                // 第一次, 就是读取connectionReq第一个握手包.
                 readConnectRequest();
             } else {
+                // 这是之后普通的请求. 如果session已经过期了, 但是client不知道, 发送普通包也来这里
                 readRequest();
             }
             lenBuffer.clear();
@@ -319,6 +323,8 @@ public class NIOServerCnxn extends ServerCnxn {
 
     /**
      * Handles read/write IO on connection.
+     *
+     * 最终, 转来转去(从selector的select()轮询方法, 到包装后放到workPool的第一个线程里处理, 最终, 还是到了这里).
      */
     void doIO(SelectionKey k) throws InterruptedException {
         try {
@@ -352,6 +358,7 @@ public class NIOServerCnxn extends ServerCnxn {
                 }
             }
             if (k.isWritable()) {
+                // 握手响应来了, 给对方.
                 handleWrite(k);
 
                 if (!initialized && !getReadInterest() && !getWriteInterest()) {
@@ -382,6 +389,7 @@ public class NIOServerCnxn extends ServerCnxn {
         }
     }
 
+    // 普通的包
     protected void readRequest() throws IOException {
         zkServer.processPacket(this, incomingBuffer);
     }
@@ -423,6 +431,7 @@ public class NIOServerCnxn extends ServerCnxn {
         if (!isZKServerRunning()) {
             throw new IOException("ZooKeeperServer not running");
         }
+        // 这里, 就是在工作, 处理握手.!!!!!!!!!!!!!!!!
         zkServer.processConnectRequest(this, incomingBuffer);
         initialized = true;
     }

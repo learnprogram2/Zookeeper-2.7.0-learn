@@ -93,6 +93,8 @@ public class WorkerService {
     }
 
     /**
+     * 永远用第一个线程来执行??? 这是为什么???
+     *
      * Schedule work to be done.  If a worker thread pool is not being
      * used, work is done directly by this thread. This schedule API is
      * for use with non-assignable WorkerServices. For assignable
@@ -121,6 +123,7 @@ public class WorkerService {
         int size = workers.size();
         if (size > 0) {
             try {
+                // 这个正常肯定是0, 第一个线程
                 // make sure to map negative ids as well to [0, size-1]
                 int workerNum = ((int) (id % size) + size) % size;
                 ExecutorService worker = workers.get(workerNum);
@@ -136,6 +139,7 @@ public class WorkerService {
         }
     }
 
+    // 这是在workPool里面做 IO处理的任务. 负责.
     private class ScheduledWorkRequest implements Runnable {
 
         private final WorkRequest workRequest;

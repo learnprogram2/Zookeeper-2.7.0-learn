@@ -130,7 +130,11 @@ public class LeaderSessionTracker extends UpgradeableSessionTracker {
         return globalSessionTracker.touchSession(sessionId, sessionTimeout);
     }
 
+    // 创建一个sessionid, 递增的.
     public long createSession(int sessionTimeout) {
+        // Whether learners in this quorum should create new sessions as local.
+        //     * False by default to preserve existing behavior
+        // 这个应该是不会创建一个本地的session的.
         if (localSessionsEnabled) {
             return localSessionTracker.createSession(sessionTimeout);
         }

@@ -248,6 +248,9 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
                        && requestsToProcess > 0
                        && (maxReadBatchSize < 0 || readsProcessed <= maxReadBatchSize)
                        && (request = queuedRequests.poll()) != null) {
+
+                    // 这里是处理request
+
                     requestsToProcess--;
                     if (needCommit(request) || pendingRequests.containsKey(request.sessionId)) {
                         // Add request to pending
@@ -466,6 +469,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
      */
     private void sendToNextProcessor(Request request) {
         numRequestsProcessing.incrementAndGet();
+        // 包装成CommitWorkReqeust
         CommitWorkRequest workRequest = new CommitWorkRequest(request);
         workerPool.schedule(workRequest, request.sessionId);
     }

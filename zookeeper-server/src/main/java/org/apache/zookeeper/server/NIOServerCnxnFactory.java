@@ -203,6 +203,8 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
             reconfiguring = true;
         }
 
+        // TODO: 137. 服务端接收到连接之后会做什么事情?
+        // 这里是ZK peer接收到client的请求后的处理.
         private void select() {
             try {
                 selector.select();
@@ -249,10 +251,15 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         }
 
         /**
-         * Accept new socket connections. Enforces maximum number of connections
-         * per client IP address. Round-robin assigns to selector thread for
-         * handling. Returns whether pulled a connection off the accept queue
-         * or not. If encounters an error attempts to fast close the socket.
+         * 接收zk客户端的连接请求.
+         * 限制一个ip的最大连接数量60个
+         * 轮询策略来把新的socket绑定到一个selectorThread来处理这个连接以后的所有事情
+         *
+         * Accept new socket connections.
+         * Enforces maximum number of connections per client IP address.
+         * Round-robin assigns to selector thread for handling.
+         * Returns whether pulled a connection off the accept queue or not.
+         * If encounters an error attempts to fast close the socket.
          *
          * @return whether was able to accept a connection or not
          */
@@ -260,6 +267,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
             boolean accepted = false;
             SocketChannel sc = null;
             try {
+                // 把这个socketChannel接手过来
                 sc = acceptSocket.accept();
                 accepted = true;
                 if (limitTotalNumberOfCnxns()) {
@@ -274,8 +282,10 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
 
                 LOG.debug("Accepted socket connection from {}", sc.socket().getRemoteSocketAddress());
 
+                // 2. 设置成nio
                 sc.configureBlocking(false);
 
+                // 3. 轮询找一个selector, 把这个socketChannel给它处理.
                 // Round-robin assign this connection to a selector thread
                 if (!selectorIterator.hasNext()) {
                     selectorIterator = selectorThreads.iterator();
@@ -332,11 +342,14 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         }
 
         /**
+         * 这个是 和 nioClient建立好的连接之后, 就跑到这里来处理了. 应该会实现ZK的二次握手.
+         *
          * Place new accepted connection onto a queue for adding. Do this
          * so only the selector thread modifies what keys are registered
          * with the selector.
          */
         public boolean addAcceptedConnection(SocketChannel accepted) {
+            // 添加到队列里, 把selector叫醒, 赶紧注册新的socketChannel
             if (stopped || !acceptedQueue.offer(accepted)) {
                 return false;
             }
@@ -359,6 +372,10 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         }
 
         /**
+         * 这个是selector线程loop的地方. 会
+         * 1. 接收处理新的socketChannel, 放到自己的selector上来维护.
+         * 2.
+         *
          * The main loop for the thread selects() on the connections and
          * dispatches ready I/O work requests, then registers all pending
          * newly accepted connections and updates any interest ops on the
@@ -406,11 +423,13 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                 selector.select();
 
                 Set<SelectionKey> selected = selector.selectedKeys();
+                // 这为什么费半天劲包装成list呢?
                 ArrayList<SelectionKey> selectedList = new ArrayList<SelectionKey>(selected);
                 Collections.shuffle(selectedList);
                 Iterator<SelectionKey> selectedKeys = selectedList.iterator();
                 while (!stopped && selectedKeys.hasNext()) {
                     SelectionKey key = selectedKeys.next();
+                    // 接受了一个key, 就把他干掉
                     selected.remove(key);
 
                     if (!key.isValid()) {
@@ -429,6 +448,10 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         }
 
         /**
+         * // 这是正常的和client的IO处理. 就把数据给socketChannel对应的NioServerCnxn, 让他处理.
+         *
+         * 把channel(数据)和NioServerCnxn(处理逻辑) 包装成IOWorkRequest, 放到workPool里面
+         *
          * Schedule I/O for processing on the connection associated with
          * the given SelectionKey. If a worker thread pool is not being used,
          * I/O is run directly by this thread.
@@ -437,11 +460,13 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
             IOWorkRequest workRequest = new IOWorkRequest(this, key);
             NIOServerCnxn cnxn = (NIOServerCnxn) key.attachment();
 
+            // 这个是说, 先把cnxn的事件都停掉, 我们要开始处理了.
             // Stop selecting this key while processing on its
             // connection
             cnxn.disableSelectable();
             key.interestOps(0);
             touchCnxn(cnxn);
+            // 放在workpool里面的第一个线程, 让他执行.
             workerPool.schedule(workRequest);
         }
 
@@ -454,9 +479,14 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
             while (!stopped && (accepted = acceptedQueue.poll()) != null) {
                 SelectionKey key = null;
                 try {
+                    // 1. 把新的socket注册到自己的registerr上面.
                     key = accepted.register(selector, SelectionKey.OP_READ);
+
+                    // 2. 我感觉是创建一个NioServerCnxn, 负责维护这个communication.
                     NIOServerCnxn cnxn = createConnection(accepted, key, this);
                     key.attach(cnxn);
+
+                    // 3. 把我们peer这边和client的连接维持者 NioServerCnxn存起来.
                     addCnxn(cnxn);
                 } catch (IOException e) {
                     // register, createConnection
@@ -501,6 +531,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
             this.cnxn = (NIOServerCnxn) key.attachment();
         }
 
+        // 这是client发过来的数据, 我们做处理的逻辑.
         public void doWork() throws InterruptedException {
             if (!key.isValid()) {
                 selectorThread.cleanupSelectionKey(key);
@@ -806,6 +837,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         }
         Set<NIOServerCnxn> set = ipMap.get(addr);
         if (set == null) {
+            // 默认一个ip只有一个NioServerCnxn, 把出事的容量设置成2个, 减少8的内存消耗, 也避免重哈希什么的东西.
             // in general we will see 1 connection from each
             // host, setting the initial cap to 2 allows us
             // to minimize mem usage in the common case
