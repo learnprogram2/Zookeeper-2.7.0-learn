@@ -197,6 +197,7 @@ public class Follower extends Learner {
                 self.setLastSeenQuorumVerifier(qv, true);
             }
 
+            // 这里应该是follower接收proposal的入口.
             fzk.logRequest(hdr, txn, digest);
             if (hdr != null) {
                 /*

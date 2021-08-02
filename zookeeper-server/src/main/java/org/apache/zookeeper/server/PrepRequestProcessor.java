@@ -85,6 +85,12 @@ import org.slf4j.LoggerFactory;
 
 /**
  *
+ * leader处理链条的第二关:
+ *
+ * 本processor建立当前request需要的transaction.
+ * 依赖ZKServer去更新outstandingRequests???? 来保证生成事务时候考虑到队列中的事务.
+ *
+ * 我理解: 这里是分配了一个新的transactionID, 放到request里面了. 然后搞了当前node和parentnode的两条nodeChangeRecord散入到zkServer里面的outstandingChanges
  *
  * This request processor is generally at the start of a RequestProcessor
  * change. It sets up any transactions associated with requests that change the
@@ -140,9 +146,11 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
         try {
             while (true) {
                 ServerMetrics.getMetrics().PREP_PROCESSOR_QUEUE_SIZE.add(submittedRequests.size());
+
+                // 1. 阻塞拿到一个请求
                 Request request = submittedRequests.take();
-                ServerMetrics.getMetrics().PREP_PROCESSOR_QUEUE_TIME
-                    .add(Time.currentElapsedTime() - request.prepQueueStartTime);
+                ServerMetrics.getMetrics().PREP_PROCESSOR_QUEUE_TIME.add(Time.currentElapsedTime() - request.prepQueueStartTime);
+
                 long traceMask = ZooTrace.CLIENT_REQUEST_TRACE_MASK;
                 if (request.type == OpCode.ping) {
                     traceMask = ZooTrace.CLIENT_PING_TRACE_MASK;
@@ -155,6 +163,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                 }
 
                 request.prepStartTime = Time.currentElapsedTime();
+
+                // 2. 运行pRequest来处理request, 在这里面创建事务???
                 pRequest(request);
             }
         } catch (Exception e) {
@@ -706,6 +716,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
         } else if (type == OpCode.createTTL) {
             request.setTxn(new CreateTTLTxn(path, data, listACL, newCversion, ttl));
         } else {
+            // 这里是创建了一个transaction, 放到request里面了.
             request.setTxn(new CreateTxn(path, data, listACL, createMode.isEphemeral(), newCversion));
         }
 
@@ -725,13 +736,18 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
         parentRecord.stat.setPzxid(request.getHdr().getZxid());
         parentRecord.precalculatedDigest = precalculateDigest(
                 DigestOpCode.UPDATE, parentPath, parentRecord.data, parentRecord.stat);
+
+
         addChangeRecord(parentRecord);
+
         ChangeRecord nodeRecord = new ChangeRecord(
                 request.getHdr().getZxid(), path, s, 0, listACL);
         nodeRecord.data = data;
         nodeRecord.precalculatedDigest = precalculateDigest(
                 DigestOpCode.ADD, path, nodeRecord.data, s);
         setTxnDigest(request, nodeRecord.precalculatedDigest);
+
+
         addChangeRecord(nodeRecord);
     }
 
@@ -774,15 +790,13 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
         request.setTxn(null);
 
         if (!request.isThrottled()) {
-          pRequestHelper(request);
+            // 1. 这里面我理解: 这里是分配了一个新的transactionID, 放到request里面了. 然后搞了当前node和parentnode的两条nodeChangeRecord散入到zkServer里面的outstandingChanges.
+            pRequestHelper(request);
         }
 
-        // 拿到了当前事务的zxid, 给request设上去了.
+        // 拿到了当前事务的zxid, 给request设上去了. 还有下一个zxid.
         request.zxid = zks.getZxid();
-        long timeFinishedPrepare = Time.currentElapsedTime();
-        ServerMetrics.getMetrics().PREP_PROCESS_TIME.add(timeFinishedPrepare - request.prepStartTime);
         nextProcessor.processRequest(request);
-        ServerMetrics.getMetrics().PROPOSAL_PROCESS_TIME.add(Time.currentElapsedTime() - timeFinishedPrepare);
     }
 
     /**
@@ -793,142 +807,144 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
     private void pRequestHelper(Request request) throws RequestProcessorException {
         try {
             switch (request.type) {
-            case OpCode.createContainer:
-            case OpCode.create:
-            case OpCode.create2:
-                CreateRequest create2Request = new CreateRequest();
-                pRequest2Txn(request.type, zks.getNextZxid(), request, create2Request, true);
-                break;
-            case OpCode.createTTL:
-                CreateTTLRequest createTtlRequest = new CreateTTLRequest();
-                pRequest2Txn(request.type, zks.getNextZxid(), request, createTtlRequest, true);
-                break;
-            case OpCode.deleteContainer:
-            case OpCode.delete:
-                DeleteRequest deleteRequest = new DeleteRequest();
-                pRequest2Txn(request.type, zks.getNextZxid(), request, deleteRequest, true);
-                break;
-            case OpCode.setData:
-                SetDataRequest setDataRequest = new SetDataRequest();
-                pRequest2Txn(request.type, zks.getNextZxid(), request, setDataRequest, true);
-                break;
-            case OpCode.reconfig:
-                ReconfigRequest reconfigRequest = new ReconfigRequest();
-                ByteBufferInputStream.byteBuffer2Record(request.request, reconfigRequest);
-                pRequest2Txn(request.type, zks.getNextZxid(), request, reconfigRequest, true);
-                break;
-            case OpCode.setACL:
-                SetACLRequest setAclRequest = new SetACLRequest();
-                pRequest2Txn(request.type, zks.getNextZxid(), request, setAclRequest, true);
-                break;
-            case OpCode.check:
-                CheckVersionRequest checkRequest = new CheckVersionRequest();
-                pRequest2Txn(request.type, zks.getNextZxid(), request, checkRequest, true);
-                break;
-            case OpCode.multi:
-                MultiOperationRecord multiRequest = new MultiOperationRecord();
-                try {
-                    ByteBufferInputStream.byteBuffer2Record(request.request, multiRequest);
-                } catch (IOException e) {
-                    request.setHdr(new TxnHeader(request.sessionId, request.cxid, zks.getNextZxid(), Time.currentWallTime(), OpCode.multi));
-                    throw e;
-                }
-                List<Txn> txns = new ArrayList<Txn>();
-                //Each op in a multi-op must have the same zxid!
-                long zxid = zks.getNextZxid();
-                KeeperException ke = null;
+                case OpCode.createContainer:
+                case OpCode.create:
+                case OpCode.create2:
+                    // 我们普通的创建就会到这里:
+                    CreateRequest create2Request = new CreateRequest();
+                    // 创建类型, 下一个zxid(这是leader干的), 原始request
+                    pRequest2Txn(request.type, zks.getNextZxid(), request, create2Request, true);
+                    break;
+                case OpCode.createTTL:
+                    CreateTTLRequest createTtlRequest = new CreateTTLRequest();
+                    pRequest2Txn(request.type, zks.getNextZxid(), request, createTtlRequest, true);
+                    break;
+                case OpCode.deleteContainer:
+                case OpCode.delete:
+                    DeleteRequest deleteRequest = new DeleteRequest();
+                    pRequest2Txn(request.type, zks.getNextZxid(), request, deleteRequest, true);
+                    break;
+                case OpCode.setData:
+                    SetDataRequest setDataRequest = new SetDataRequest();
+                    pRequest2Txn(request.type, zks.getNextZxid(), request, setDataRequest, true);
+                    break;
+                case OpCode.reconfig:
+                    ReconfigRequest reconfigRequest = new ReconfigRequest();
+                    ByteBufferInputStream.byteBuffer2Record(request.request, reconfigRequest);
+                    pRequest2Txn(request.type, zks.getNextZxid(), request, reconfigRequest, true);
+                    break;
+                case OpCode.setACL:
+                    SetACLRequest setAclRequest = new SetACLRequest();
+                    pRequest2Txn(request.type, zks.getNextZxid(), request, setAclRequest, true);
+                    break;
+                case OpCode.check:
+                    CheckVersionRequest checkRequest = new CheckVersionRequest();
+                    pRequest2Txn(request.type, zks.getNextZxid(), request, checkRequest, true);
+                    break;
+                case OpCode.multi:
+                    MultiOperationRecord multiRequest = new MultiOperationRecord();
+                    try {
+                        ByteBufferInputStream.byteBuffer2Record(request.request, multiRequest);
+                    } catch (IOException e) {
+                        request.setHdr(new TxnHeader(request.sessionId, request.cxid, zks.getNextZxid(), Time.currentWallTime(), OpCode.multi));
+                        throw e;
+                    }
+                    List<Txn> txns = new ArrayList<Txn>();
+                    //Each op in a multi-op must have the same zxid!
+                    long zxid = zks.getNextZxid();
+                    KeeperException ke = null;
 
-                //Store off current pending change records in case we need to rollback
-                Map<String, ChangeRecord> pendingChanges = getPendingChanges(multiRequest);
-                request.setHdr(new TxnHeader(request.sessionId, request.cxid, zxid,
-                        Time.currentWallTime(), request.type));
+                    //Store off current pending change records in case we need to rollback
+                    Map<String, ChangeRecord> pendingChanges = getPendingChanges(multiRequest);
+                    request.setHdr(new TxnHeader(request.sessionId, request.cxid, zxid,
+                            Time.currentWallTime(), request.type));
 
-                for (Op op : multiRequest) {
-                    Record subrequest = op.toRequestRecord();
-                    int type;
-                    Record txn;
+                    for (Op op : multiRequest) {
+                        Record subrequest = op.toRequestRecord();
+                        int type;
+                        Record txn;
 
-                    /* If we've already failed one of the ops, don't bother
-                     * trying the rest as we know it's going to fail and it
-                     * would be confusing in the logfiles.
-                     */
-                    if (ke != null) {
-                        type = OpCode.error;
-                        txn = new ErrorTxn(Code.RUNTIMEINCONSISTENCY.intValue());
-                    } else {
-                        /* Prep the request and convert to a Txn */
-                        try {
-                            pRequest2Txn(op.getType(), zxid, request, subrequest, false);
-                            type = op.getType();
-                            txn = request.getTxn();
-                        } catch (KeeperException e) {
-                            ke = e;
+                        /* If we've already failed one of the ops, don't bother
+                         * trying the rest as we know it's going to fail and it
+                         * would be confusing in the logfiles.
+                         */
+                        if (ke != null) {
                             type = OpCode.error;
-                            txn = new ErrorTxn(e.code().intValue());
+                            txn = new ErrorTxn(Code.RUNTIMEINCONSISTENCY.intValue());
+                        } else {
+                            /* Prep the request and convert to a Txn */
+                            try {
+                                pRequest2Txn(op.getType(), zxid, request, subrequest, false);
+                                type = op.getType();
+                                txn = request.getTxn();
+                            } catch (KeeperException e) {
+                                ke = e;
+                                type = OpCode.error;
+                                txn = new ErrorTxn(e.code().intValue());
 
-                            if (e.code().intValue() > Code.APIERROR.intValue()) {
-                                LOG.info("Got user-level KeeperException when processing {} aborting"
-                                         + " remaining multi ops. Error Path:{} Error:{}",
-                                         request.toString(),
-                                         e.getPath(),
-                                         e.getMessage());
+                                if (e.code().intValue() > Code.APIERROR.intValue()) {
+                                    LOG.info("Got user-level KeeperException when processing {} aborting"
+                                             + " remaining multi ops. Error Path:{} Error:{}",
+                                             request.toString(),
+                                             e.getPath(),
+                                             e.getMessage());
+                                }
+
+                                request.setException(e);
+
+                                /* Rollback change records from failed multi-op */
+                                rollbackPendingChanges(zxid, pendingChanges);
                             }
+                        }
 
-                            request.setException(e);
-
-                            /* Rollback change records from failed multi-op */
-                            rollbackPendingChanges(zxid, pendingChanges);
+                        // TODO: I don't want to have to serialize it here and then
+                        //       immediately deserialize in next processor. But I'm
+                        //       not sure how else to get the txn stored into our list.
+                        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                            BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
+                            txn.serialize(boa, "request");
+                            ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
+                            txns.add(new Txn(type, bb.array()));
                         }
                     }
 
-                    // TODO: I don't want to have to serialize it here and then
-                    //       immediately deserialize in next processor. But I'm
-                    //       not sure how else to get the txn stored into our list.
-                    try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-                        BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
-                        txn.serialize(boa, "request");
-                        ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
-                        txns.add(new Txn(type, bb.array()));
+                    request.setTxn(new MultiTxn(txns));
+                    if (digestEnabled) {
+                        setTxnDigest(request);
                     }
-                }
 
-                request.setTxn(new MultiTxn(txns));
-                if (digestEnabled) {
-                    setTxnDigest(request);
-                }
+                    break;
 
-                break;
+                //create/close session don't require request record
+                case OpCode.createSession:
+                case OpCode.closeSession:
+                    if (!request.isLocalSession()) {
+                        pRequest2Txn(request.type, zks.getNextZxid(), request, null, true);
+                    }
+                    break;
 
-            //create/close session don't require request record
-            case OpCode.createSession:
-            case OpCode.closeSession:
-                if (!request.isLocalSession()) {
-                    pRequest2Txn(request.type, zks.getNextZxid(), request, null, true);
-                }
-                break;
-
-            //All the rest don't need to create a Txn - just verify session
-            case OpCode.sync:
-            case OpCode.exists:
-            case OpCode.getData:
-            case OpCode.getACL:
-            case OpCode.getChildren:
-            case OpCode.getAllChildrenNumber:
-            case OpCode.getChildren2:
-            case OpCode.ping:
-            case OpCode.setWatches:
-            case OpCode.setWatches2:
-            case OpCode.checkWatches:
-            case OpCode.removeWatches:
-            case OpCode.getEphemerals:
-            case OpCode.multiRead:
-            case OpCode.addWatch:
-            case OpCode.whoAmI:
-                zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
-                break;
-            default:
-                LOG.warn("unknown type {}", request.type);
-                break;
+                //All the rest don't need to create a Txn - just verify session
+                case OpCode.sync:
+                case OpCode.exists:
+                case OpCode.getData:
+                case OpCode.getACL:
+                case OpCode.getChildren:
+                case OpCode.getAllChildrenNumber:
+                case OpCode.getChildren2:
+                case OpCode.ping:
+                case OpCode.setWatches:
+                case OpCode.setWatches2:
+                case OpCode.checkWatches:
+                case OpCode.removeWatches:
+                case OpCode.getEphemerals:
+                case OpCode.multiRead:
+                case OpCode.addWatch:
+                case OpCode.whoAmI:
+                    zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
+                    break;
+                default:
+                    LOG.warn("unknown type {}", request.type);
+                    break;
             }
         } catch (KeeperException e) {
             if (request.getHdr() != null) {

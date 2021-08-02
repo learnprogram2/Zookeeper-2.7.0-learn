@@ -215,6 +215,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     private static final long superSecret = 0XB3415C00L;
 
     private final AtomicInteger requestsInProcess = new AtomicInteger(0);
+    // 这个是PrepRequestProcessor里面创建事务之后, 在这里面塞入了parent和新node的changeRecord. 我不知道是干什么的.
     final Deque<ChangeRecord> outstandingChanges = new ArrayDeque<>();
     // this data structure must be accessed under the outstandingChanges lock
     final Map<String, ChangeRecord> outstandingChangesForPath = new HashMap<String, ChangeRecord>();
@@ -1631,6 +1632,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
     }
 
+    // 这里是普通的包过来了. 我觉得这个方法做的主要是反序列化.
     public void processPacket(ServerCnxn cnxn, ByteBuffer incomingBuffer) throws IOException {
         // We have the request, now process and setup for next
         InputStream bais = new ByteBufferInputStream(incomingBuffer);
@@ -1714,6 +1716,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 }
                 // 这个正常的请求, 就是走一遍processor链条.
                 si.setOwner(ServerCnxn.me);
+
                 submitRequest(si);
             }
         }

@@ -33,6 +33,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ *
+ * 这个syncRequestProcessor就是把所有请求(需要commit的请i去)刷到disk里面.
+ * 会把request打一个batch, request只有等到batch刷新到disk里面之后才会接着processor链条往下走.
+ *
  * This RequestProcessor logs requests to disk. It batches the requests to do
  * the io efficiently. The request is not passed to the next RequestProcessor
  * until its log has been synced to disk.
@@ -44,7 +48,9 @@ import org.slf4j.LoggerFactory;
  *             SendAckRequestProcessor which send the packets to leader.
  *             SendAckRequestProcessor is flushable which allow us to force
  *             push packets to leader.
- * 3. Observer - Sync committed request to disk (received as INFORM packet).
+ *             把request刷到磁盘上, 把request转发到sendACK, 会把package发到leader上去.
+ *
+ * 3. Observer - Sync committed request to disk (received as INFORM packet). 只会简单的刷到磁盘上去, 没有投票权, 不会响应.
  *             It never send ack back to the leader, so the nextProcessor will
  *             be null. This change the semantic of txnlog on the observer
  *             since it only contains committed txns.
@@ -166,6 +172,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
                 Request si = queuedRequests.poll(pollTime, TimeUnit.MILLISECONDS);
                 if (si == null) {
                     /* We timed out looking for more writes to batch, go ahead and flush immediately */
+                    // 这个应该是处理已经sync到磁盘上去的request, 传递到下一个processor上.
                     flush();
                     si = queuedRequests.take();
                 }
@@ -177,9 +184,11 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
                 long startProcessTime = Time.currentElapsedTime();
                 ServerMetrics.getMetrics().SYNC_PROCESSOR_QUEUE_TIME.add(startProcessTime - si.syncQueueStartTime);
 
-                // TODO 这个很重要.
+                // TODO: 168. 如何基于SyncProcessor写本地磁盘事务日志?
+                // 1. 把request添加到db里面.
                 // track the number of records written to the log
                 if (!si.isThrottled() && zks.getZKDatabase().append(si)) {
+                    // 检查snapshot: 从logcount和logsize来判断
                     if (shouldSnapshot()) {
                         resetSnapshotStats();
                         // roll the log
@@ -213,6 +222,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
                     }
                     continue;
                 }
+                // 2. 追加到zkdb里面了, 然后加到toFlush队列里面呢
                 toFlush.add(si);
                 if (shouldFlush()) {
                     flush();
@@ -225,6 +235,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
         LOG.info("SyncRequestProcessor exited!");
     }
 
+    // 这个应该是处理已经sync到磁盘上去的request, 传递到下一个processor上.
     private void flush() throws IOException, RequestProcessorException {
         if (this.toFlush.isEmpty()) {
             return;
@@ -233,6 +244,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
         ServerMetrics.getMetrics().BATCH_SIZE.add(toFlush.size());
 
         long flushStartTime = Time.currentElapsedTime();
+        // 1. 这就保证刷到磁盘里了.
         zks.getZKDatabase().commit();
         ServerMetrics.getMetrics().SYNC_PROCESSOR_FLUSH_TIME.add(Time.currentElapsedTime() - flushStartTime);
 
@@ -240,6 +252,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
             this.toFlush.clear();
         } else {
             while (!this.toFlush.isEmpty()) {
+                // 直接传递到下一个processor里面了.
                 final Request i = this.toFlush.remove();
                 long latency = Time.currentElapsedTime() - i.syncQueueStartTime;
                 ServerMetrics.getMetrics().SYNC_PROCESSOR_QUEUE_AND_FLUSH_TIME.add(latency);
@@ -275,6 +288,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
         Objects.requireNonNull(request, "Request cannot be null");
 
         request.syncQueueStartTime = Time.currentElapsedTime();
+        // 直接加入到队列里了
         queuedRequests.add(request);
         ServerMetrics.getMetrics().SYNC_PROCESSOR_QUEUED.add(1);
     }

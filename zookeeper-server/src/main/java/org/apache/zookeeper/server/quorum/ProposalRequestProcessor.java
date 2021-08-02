@@ -27,6 +27,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ *
+ * 这个proposal处理简单的把request分发到ACKRequestProcessor和SyncRequestProcessor
+ *
  * This RequestProcessor simply forwards requests to an AckRequestProcessor and
  * SyncRequestProcessor.
  */
@@ -73,12 +76,20 @@ public class ProposalRequestProcessor implements RequestProcessor {
          * contain the handler. In this case, we add it to syncHandler, and
          * call processRequest on the next processor.
          */
+        // FIXME: 这种先不看.
         if (request instanceof LearnerSyncRequest) {
+            // 这应该是磁盘相关的, learner同步请求.
+            // 如果是learner的同步请求, 就这样处理. 这个learnerSyncRequest什么是同步请求呢?
             zks.getLeader().processSync((LearnerSyncRequest) request);
         } else {
+            // 我们走这里, 普通的create请求.
+
+            // 1. 把request传递到 CommitProcessor: 就是把需要commit的request加入到了commitProcessor的queuedWriteRequests队列, 不需要commit的req就简单计数.
             if (shouldForwardToNextProcessor(request)) {
                 nextProcessor.processRequest(request);
             }
+            // 这个肯定不为null啊
+            // 2. 交给leader做一个propose, 然后交给syncProcessor传播过去
             if (request.getHdr() != null) {
                 // We need to sync and get consensus on any transactions
                 try {
@@ -86,6 +97,7 @@ public class ProposalRequestProcessor implements RequestProcessor {
                 } catch (XidRolloverException e) {
                     throw new RequestProcessorException(e.getMessage(), e);
                 }
+                // 这个sync应该是同步到磁盘里
                 syncProcessor.processRequest(request);
             }
         }

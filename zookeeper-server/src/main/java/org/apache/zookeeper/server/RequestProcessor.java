@@ -19,6 +19,9 @@
 package org.apache.zookeeper.server;
 
 /**
+ * 请求处理链条就代表着一个事务.
+ * 单线程内运行
+ *
  * RequestProcessors are chained together to process transactions. Requests are
  * always processed in order. The standalone server, follower, and leader all
  * have slightly different RequestProcessors chained together.

@@ -108,6 +108,7 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
             }
         }
 
+        // 这里是升级
         // Uh oh.  We need to upgrade before we can proceed.
         if (!self.isLocalSessionsUpgradingEnabled()) {
             throw new KeeperException.EphemeralOnLocalSessionException();

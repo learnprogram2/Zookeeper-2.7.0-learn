@@ -92,15 +92,15 @@ public class CreateCommand extends CliCommand {
 
         CreateMode flags;
         if (hasE && hasS) {
-            flags = CreateMode.EPHEMERAL_SEQUENTIAL;
+            flags = CreateMode.EPHEMERAL_SEQUENTIAL; // 临时顺序节点
         } else if (hasE) {
-            flags = CreateMode.EPHEMERAL;
+            flags = CreateMode.EPHEMERAL;  // 临时节点
         } else if (hasS) {
-            flags = hasT ? CreateMode.PERSISTENT_SEQUENTIAL_WITH_TTL : CreateMode.PERSISTENT_SEQUENTIAL;
+            flags = hasT ? CreateMode.PERSISTENT_SEQUENTIAL_WITH_TTL : CreateMode.PERSISTENT_SEQUENTIAL;// 持久顺序节点
         } else if (hasC) {
-            flags = CreateMode.CONTAINER;
+            flags = CreateMode.CONTAINER;  // container节点, 包含的元素都删除, 本节点也会删除
         } else {
-            flags = hasT ? CreateMode.PERSISTENT_WITH_TTL : CreateMode.PERSISTENT;
+            flags = hasT ? CreateMode.PERSISTENT_WITH_TTL : CreateMode.PERSISTENT; // 持久节点.
         }
         if (hasT) {
             try {

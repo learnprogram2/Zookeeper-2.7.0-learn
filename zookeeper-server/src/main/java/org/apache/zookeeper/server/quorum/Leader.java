@@ -430,6 +430,7 @@ public class Leader extends LearnerMaster {
      */
     static final int INFORMANDACTIVATE = 19;
 
+    // 这个是发出去的所有proposal
     final ConcurrentMap<Long, Proposal> outstandingProposals = new ConcurrentHashMap<Long, Proposal>();
 
     private final ConcurrentLinkedQueue<Proposal> toBeApplied = new ConcurrentLinkedQueue<Proposal>();
@@ -918,6 +919,7 @@ public class Leader extends LearnerMaster {
             return false;
         }
 
+        // 必须要满足那个quorumValidate什么的算法, 过半写才会尝试commit
         // in order to be committed, a proposal must be accepted by a quorum.
         //
         // getting a quorum from all necessary configurations.
@@ -1027,6 +1029,7 @@ public class Leader extends LearnerMaster {
             // The proposal has already been committed
             return;
         }
+        // 拿到上一次刚发出去的proposal
         Proposal p = outstandingProposals.get(zxid);
         if (p == null) {
             LOG.warn("Trying to commit future proposal: zxid 0x{} from {}", Long.toHexString(zxid), followerAddr);
@@ -1037,6 +1040,7 @@ public class Leader extends LearnerMaster {
             p.request.logLatency(ServerMetrics.getMetrics().ACK_LATENCY, Long.toString(sid));
         }
 
+        // 给这个proposal加一个自己的选票.
         p.addAck(sid);
 
         boolean hasCommitted = tryToCommit(p, zxid, followerAddr);
@@ -1050,6 +1054,7 @@ public class Leader extends LearnerMaster {
         // concurrent reconfigs are allowed, this can happen and then we need to check whether some pending
         // ops may already have enough acks and can be committed, which is what this code does.
 
+        // 如果commit掉了, 这是处理reconfig的请求, 暂时不看.
         if (hasCommitted && p.request != null && p.request.getHdr().getType() == OpCode.reconfig) {
             long curZxid = zxid;
             while (allowedToCommit && hasCommitted && p != null) {
@@ -1228,6 +1233,7 @@ public class Leader extends LearnerMaster {
     }
 
     /**
+     * 这里是吧请求同步给所有peer了, 使用outstandingProposals存起来
      * create a proposal and send it out to all the members
      *
      * @param request

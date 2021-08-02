@@ -1444,9 +1444,11 @@ public class ZooKeeper implements AutoCloseable {
         final String serverPath = prependChroot(clientPath);
 
         RequestHeader h = new RequestHeader();
+        // 根据创建类型, 补充header的type/
         setCreateHeader(createMode, h);
         Create2Response response = new Create2Response();
         Record record = makeCreateRecord(createMode, serverPath, data, acl, ttl);
+        // 把消息提交过去!!!
         ReplyHeader r = cnxn.submitRequest(h, record, response, null);
         if (r.getErr() != 0) {
             throw KeeperException.create(KeeperException.Code.get(r.getErr()), clientPath);

@@ -144,6 +144,7 @@ public class FinalRequestProcessor implements RequestProcessor {
         return rc;
     }
 
+    // committed的request都会跑到这里来
     public void processRequest(Request request) {
         LOG.debug("Processing request:: {}", request);
 
@@ -156,6 +157,7 @@ public class FinalRequestProcessor implements RequestProcessor {
         }
         ProcessTxnResult rc = null;
         if (!request.isThrottled()) {
+            // 拿到一个processTxnResult
           rc = applyRequest(request);
         }
         if (request.cnxn == null) {
