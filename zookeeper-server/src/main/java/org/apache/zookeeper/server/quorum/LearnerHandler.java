@@ -785,6 +785,8 @@ public class LearnerHandler extends ZooKeeperThread {
     }
 
     /**
+     * 要不要和follower同步数据(使用Diff,Trunc,Snap命令)
+     *
      * Determine if we need to sync with follower using DIFF/TRUNC/SNAP
      * and setup follower to receive packets from commit processor
      *

@@ -193,7 +193,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
                         resetSnapshotStats();
                         // roll the log
                         zks.getZKDatabase().rollLog();
-                        // take a snapshot
+                        // take a snapshot 这里加了一个这样的信号量.
                         if (!snapThreadMutex.tryAcquire()) {
                             LOG.warn("Too busy to snap, skipping");
                         } else {

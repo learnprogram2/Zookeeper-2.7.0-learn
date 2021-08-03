@@ -62,6 +62,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ *
+ * 管理内存数据, 包含session, datatree, committedLog.
+ * 重启的时候会从磁盘的log和snapshot文件里面恢复.
+ *
+ *
  * This class maintains the in memory database of zookeeper
  * server states that includes the sessions, datatree and the
  * committed logs. It is booted up  after reading the logs
@@ -101,6 +106,9 @@ public class ZKDatabase {
     private AtomicInteger txnCount = new AtomicInteger(0);
 
     /**
+     * fileTxnSnapLog和ZKDatabase是一对一的关系:
+     * ZKDatabase会把内存数据映射到fileTxnSnapLog具体的文件
+     *
      * the filetxnsnaplog that this zk database
      * maps to. There is a one to one relationship
      * between a filetxnsnaplog and zkdatabase.
@@ -632,11 +640,14 @@ public class ZKDatabase {
     }
 
     /**
+     * 1. create的request就到这里
+     *
      * append to the underlying transaction log
      * @param si the request to append
      * @return true if the append was succesfull and false if not
      */
     public boolean append(Request si) throws IOException {
+        // 计数一下, 直接就塞入log里面.
         txnCount.incrementAndGet();
         return this.snapLog.append(si);
     }

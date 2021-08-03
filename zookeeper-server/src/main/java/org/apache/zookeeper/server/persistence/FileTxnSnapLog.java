@@ -59,6 +59,8 @@ public class FileTxnSnapLog {
     //the directory containing the
     //the snapshot directory
     final File snapDir;
+
+    // 这两个是数据
     TxnLog txnLog;
     SnapShot snapLog;
     private final boolean autoCreateDB;
@@ -114,6 +116,7 @@ public class FileTxnSnapLog {
     public FileTxnSnapLog(File dataDir, File snapDir) throws IOException {
         LOG.debug("Opening datadir:{} snapDir:{}", dataDir, snapDir);
 
+        // 这里是创建了一个{datadir}/version-2 的文件夹
         this.dataDir = new File(dataDir, version + VERSION);
         this.snapDir = new File(snapDir, version + VERSION);
 
@@ -456,21 +459,32 @@ public class FileTxnSnapLog {
     }
 
     /**
+     * 这里是做snapshot的入口.
+     *
      * save the datatree and the sessions into a snapshot
      * @param dataTree the datatree to be serialized onto disk
      * @param sessionsWithTimeouts the session timeouts to be
      * serialized onto disk
-     * @param syncSnap sync the snapshot immediately after write
+     * @param syncSnap sync the snapshot immediately after write, 暂时不同步.
      * @throws IOException
      */
     public void save(
         DataTree dataTree,
         ConcurrentHashMap<Long, Integer> sessionsWithTimeouts,
         boolean syncSnap) throws IOException {
+        // ??? 问题: 这里也没有做什么多线程阻塞的操作, 怎么保证呢?
+
+        // 这里是拿到内存数据里的最后一条zxid来做snapshot的名字
+        // "{snapdir}/version-2/snapshot.{zxid}"
         long lastZxid = dataTree.lastProcessedZxid;
         File snapshotFile = new File(snapDir, Util.makeSnapshotName(lastZxid));
         LOG.info("Snapshotting: 0x{} to {}", Long.toHexString(lastZxid), snapshotFile);
         try {
+            // 序列化: "{snapdir}/version-2/snapshot.{zxid}"
+            // sessionMap: [count <long:id int:timeout>]
+            // acls: [count, <long:key, int:acllist.size, data:acl> <...>]
+            // dataNodes: [path: len+bytes], [数据:bytes long:acl]/
+            //            [path: len+bytes], [数据:bytes long:acl]/
             snapLog.serialize(dataTree, sessionsWithTimeouts, snapshotFile, syncSnap);
         } catch (IOException e) {
             if (snapshotFile.length() == 0) {

@@ -21,6 +21,7 @@ package org.apache.zookeeper.server.watch;
 import org.apache.zookeeper.ZooDefs;
 
 public enum WatcherMode {
+    // 这个标准的, 应该就是一次性的.
     STANDARD(false, false),
     PERSISTENT(true, false),
     PERSISTENT_RECURSIVE(true, true)

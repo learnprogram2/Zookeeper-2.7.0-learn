@@ -266,6 +266,11 @@ public class FileTxnLog implements TxnLog, Closeable {
               return append(hdr, txn, null);
     }
 
+    // 这就追加一条request到文件里: 带有摘要的事务日志.
+    // 一个事务文件:  "{datadir}/version-2/log.{第一条zxid}"
+    //  内容:
+    //      -文件header:  [magic(ZKLG) version(2) dbid(0)]
+    //      n 事务日志:   [CRC, 数据buff(txnHeader, record, txnDigest)]
     @Override
     public synchronized boolean append(TxnHeader hdr, Record txn, TxnDigest digest) throws IOException {
         if (hdr == null) {
@@ -280,25 +285,33 @@ public class FileTxnLog implements TxnLog, Closeable {
         } else {
             lastZxidSeen = hdr.getZxid();
         }
+        // 如果没有文件, 就创建一个文件.
         if (logStream == null) {
             LOG.info("Creating new log file: {}", Util.makeLogName(hdr.getZxid()));
 
+            // 在文件夹里创建一个: "{datadir}/version-2/log.{zxid}"日志文件
             logFileWrite = new File(logDir, Util.makeLogName(hdr.getZxid()));
+            // 把日志文件包装成数据流
             fos = new FileOutputStream(logFileWrite);
             logStream = new BufferedOutputStream(fos);
             oa = BinaryOutputArchive.getArchive(logStream);
+            // 1. 文件头: [ZKLG 2 0] [magic, version, dbid(暂时没用,就是0)]
             FileHeader fhdr = new FileHeader(TXNLOG_MAGIC, VERSION, dbId);
             fhdr.serialize(oa, "fileheader");
             // Make sure that the magic number is written before padding.
+            // 刷新好, 复位
             logStream.flush();
             filePadding.setCurrentSize(fos.getChannel().position());
             streamsToFlush.add(fos);
         }
+
         filePadding.padFile(fos.getChannel());
+        // 就是简单的把log序列化成buffer了.
         byte[] buf = Util.marshallTxnEntry(hdr, txn, digest);
         if (buf == null || buf.length == 0) {
             throw new IOException("Faulty serialization for header " + "and txn");
         }
+        // 搞一个CRC校验码: 写入[CRC, 数据buff(txnHeader, record, txnDigest)]
         Checksum crc = makeChecksumAlgorithm();
         crc.update(buf, 0, buf.length);
         oa.writeLong(crc.getValue(), "txnEntryCRC");

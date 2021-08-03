@@ -41,6 +41,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * 本机submit的request和已经在集群中达成commit的request匹配，并将匹配后的request交给nextProcessor（即ToBeAppliedRequestProcessor）处理
+ *
  * commitProcessor把来的commitReq和本地提交的request做匹配.
  * 秘诀是: local提交的request最终会回来作为commitReq
  * 所以我们要把他们匹配起来. 而且不是只等待committedReq.

@@ -143,6 +143,7 @@ public class ReferenceCountedACLCache {
         synchronized (this) {
             clonedLongKeyMap = new HashMap<>(longKeyMap);
         }
+        // [count, <long:key, int:acllist.size, data:acl> <long:key, int:acllist.size, data:acl> <long:key, int:acllist.size, data:acl>]
         oa.writeInt(clonedLongKeyMap.size(), "map");
         for (Map.Entry<Long, List<ACL>> val : clonedLongKeyMap.entrySet()) {
             oa.writeLong(val.getKey(), "long");

@@ -228,6 +228,8 @@ public class FileSnap implements SnapShot {
     }
 
     /**
+     * 具体的序列化, 没有做甚操作啊, 这个dt还能创建更新啊. 只是锁住了当前的对象, 不会做其他的snapshot了.
+     *
      * serialize the datatree and session into the file snapshot
      * @param dt the datatree to be serialized
      * @param sessions the sessions to be serialized
@@ -242,8 +244,10 @@ public class FileSnap implements SnapShot {
         if (!close) {
             try (CheckedOutputStream snapOS = SnapStream.getOutputStream(snapShot, fsync)) {
                 OutputArchive oa = BinaryOutputArchive.getArchive(snapOS);
+                // 文件头: [magic(ZKSN) version(2) dbid(0)]
                 FileHeader header = new FileHeader(SNAP_MAGIC, VERSION, dbId);
                 serialize(dt, sessions, oa, header);
+
                 SnapStream.sealStream(snapOS, oa);
 
                 // Digest feature was added after the CRC to make it backward

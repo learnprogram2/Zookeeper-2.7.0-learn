@@ -141,6 +141,7 @@ public class WatchManager implements IWatchManager {
                     } else if (!pathParentIterator.atParentPath()) {
                         watchers.add(watcher);
                         if (!watcherMode.isPersistent()) {
+                            // 这里就是: 如果不是persistent的watcher, 就会删除
                             iterator.remove();
                             Set<String> paths = watch2Paths.get(watcher);
                             if (paths != null) {

@@ -82,6 +82,7 @@ public class Util {
      * @return file name
      */
     public static String makeLogName(long zxid) {
+        // "log.{zxid}"
         return FileTxnLog.LOG_FILE_PREFIX + "." + Long.toHexString(zxid);
     }
 

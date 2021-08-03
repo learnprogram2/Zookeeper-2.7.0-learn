@@ -146,6 +146,8 @@ public class SnapStream {
      * Currently, only CheckedOutputStream will write it's checkSum to the
      * end of the stream.
      *
+     * 写入了总长度和/ 封上文件了.
+     *
      */
     public static void sealStream(CheckedOutputStream os, OutputArchive oa) throws IOException {
         long val = os.getChecksum().getValue();

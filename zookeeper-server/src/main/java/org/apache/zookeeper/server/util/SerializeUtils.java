@@ -161,13 +161,25 @@ public class SerializeUtils {
         dt.deserialize(ia, "tree");
     }
 
+    // 这里是具体的把对象序列化, 输出到文件流里面
+    // sessionMap: [count <long:id int:timeout>]
+    // acls: [count, <long:key, int:acllist.size, data:acl> <...>]
+    // dataNodes: [path: len+bytes], [数据:bytes long:acl]/
+    //            [path: len+bytes], [数据:bytes long:acl]/
     public static void serializeSnapshot(DataTree dt, OutputArchive oa, Map<Long, Integer> sessions) throws IOException {
         HashMap<Long, Integer> sessSnap = new HashMap<Long, Integer>(sessions);
+
+        // session的序列化是: [count <long:id int:timeout>]
+
         oa.writeInt(sessSnap.size(), "count");
         for (Entry<Long, Integer> entry : sessSnap.entrySet()) {
             oa.writeLong(entry.getKey().longValue(), "id");
             oa.writeInt(entry.getValue().intValue(), "timeout");
         }
+        // 这个是dataTree的序列化.
+        // acls: [count, <long:key, int:acllist.size, data:acl> <...>]
+        // dataNodes: [path: len+bytes], [数据:bytes long:acl]/
+        //            [path: len+bytes], [数据:bytes long:acl]/
         dt.serialize(oa, "tree");
     }
 

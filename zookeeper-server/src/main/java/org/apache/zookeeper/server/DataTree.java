@@ -84,6 +84,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ *
+ * 维护了树状data结构, 简单的内存数据暴露一些API
+ * data树管理两种并行的数据结构:
+ * 1. hashtable: full path -> dataNode. 通过路径的操作都走这个.
+ * 2. tree: dataNode. 刷盘的时候, 就用树序列化.
+ *
  * This class maintains the tree data structure. It doesn't have any networking
  * or client connection code in it so that it can be tested in a stand alone
  * way.
@@ -104,9 +110,11 @@ public class DataTree {
      */
     private final NodeHashMap nodes;
 
-    private IWatchManager dataWatches;
 
+    // 这两个是watchManager, 由这个跟踪watcher的设置和调用.
+    private IWatchManager dataWatches;
     private IWatchManager childWatches;
+
 
     /** cached total size of paths and data for all DataNodes */
     private final AtomicLong nodeDataSize = new AtomicLong(0);
@@ -422,13 +430,15 @@ public class DataTree {
     }
 
     /**
+     *
+     *  这里是创建
      * Add a new node to the DataTree.
      * @param path
      *            Path for the new node.
      * @param data
      *            Data to store in the node.
      * @param acl
-     *            Node acls
+         *            Node acls
      * @param ephemeralOwner
      *            the session id that owns this node. -1 indicates this is not
      *            an ephemeral node.
@@ -439,12 +449,16 @@ public class DataTree {
      *            A Stat object to store Stat output results into.
      * @throws NodeExistsException
      * @throws NoNodeException
+     * 检查, 校验, 添加datanode, 发送事件.
      */
     public void createNode(final String path, byte[] data, List<ACL> acl, long ephemeralOwner, int parentCVersion, long zxid, long time, Stat outputStat) throws KeeperException.NoNodeException, KeeperException.NodeExistsException {
+        // 1. 上来开刀, 先把parent的地址和要建立的node名字拿出来.
         int lastSlash = path.lastIndexOf('/');
         String parentName = path.substring(0, lastSlash);
         String childName = path.substring(lastSlash + 1);
+
         StatPersisted stat = createStat(zxid, time, ephemeralOwner);
+        // 先拿parent, 看看有没有.
         DataNode parent = nodes.get(parentName);
         if (parent == null) {
             throw new KeeperException.NoNodeException();
@@ -463,6 +477,7 @@ public class DataTree {
             // we did for the global sessions.
             Long longval = aclCache.convertAcls(acl);
 
+            // 校验
             Set<String> children = parent.getChildren();
             if (children.contains(childName)) {
                 throw new KeeperException.NodeExistsException();
@@ -686,6 +701,7 @@ public class DataTree {
         childWatches.addWatch(basePath, watcher, watcherMode);
     }
 
+    // 拿数据的时候也会设置一个watcher
     public byte[] getData(String path, Stat stat, Watcher watcher) throws KeeperException.NoNodeException {
         DataNode n = nodes.get(path);
         byte[] data = null;
@@ -852,18 +868,20 @@ public class DataTree {
         return this.processTxn(header, txn, false);
     }
 
+    // 这里是处理transaction record到内存里. 当前的record, 已经经历过了过半写. 大家公认的事务.
     public ProcessTxnResult processTxn(TxnHeader header, Record txn, boolean isSubTxn) {
         ProcessTxnResult rc = new ProcessTxnResult();
 
         try {
             rc.clientId = header.getClientId();
-            rc.cxid = header.getCxid();
+            rc.cxid = header.getCxid(); // 这个是client的事务id.
             rc.zxid = header.getZxid();
             rc.type = header.getType();
             rc.err = 0;
             rc.multiResult = null;
             switch (header.getType()) {
             case OpCode.create:
+                // 我们的record就是一个create的!
                 CreateTxn createTxn = (CreateTxn) txn;
                 rc.path = createTxn.getPath();
                 createNode(
@@ -1300,13 +1318,14 @@ public class DataTree {
      */
     void serializeNode(OutputArchive oa, StringBuilder path) throws IOException {
         String pathString = path.toString();
+        // 拿到根目录(打snapshot的时候)
         DataNode node = getNode(pathString);
         if (node == null) {
             return;
         }
         String[] children = null;
         DataNode nodeCopy;
-        synchronized (node) {
+        synchronized (node) { // 把snapshot锁上.
             StatPersisted statCopy = new StatPersisted();
             copyStatPersisted(node.stat, statCopy);
             //we do not need to make a copy of node.data because the contents
@@ -1328,9 +1347,13 @@ public class DataTree {
         }
     }
 
+
+    // 一个node的数据对应到磁盘上就是: [path: len+bytes], [数据:bytes long:acl]/
     // visiable for test
     public void serializeNodeData(OutputArchive oa, String path, DataNode node) throws IOException {
+        // 长度+数据
         oa.writeString(path, "path");
+        // [buffer, int:acl]
         oa.writeRecord(node, "node");
     }
 
@@ -1347,8 +1370,14 @@ public class DataTree {
         }
     }
 
+    // acls: [count, <long:key, int:acllist.size, data:acl> <...>]
+    // dataNodes: [path: len+bytes], [数据:bytes long:acl]/
+    //            [path: len+bytes], [数据:bytes long:acl]/
     public void serialize(OutputArchive oa, String tag) throws IOException {
+        // 先序列化acl, 再序列化真正的node
+        // [count, <long:key, int:acllist.size, data:acl> <long:key, int:acllist.size, data:acl> <long:key, int:acllist.size, data:acl>]
         serializeAcls(oa);
+        // 迭代从root一直往下序列化: 每个data的数据是 [path: len+bytes], [数据:bytes long:acl]/  斜杠是结束符
         serializeNodes(oa);
     }
 
